@@ -7,6 +7,31 @@ export async function requireTenant() {
   const session = await readSession();
   if (!session?.userId || !session.companyId) throw new AccessDeniedError("Tenant access required");
 
+  if (session.platformRole === "SUPER_ADMIN") {
+    const company = await db.company.findFirst({
+      where: { id: session.companyId, status: "ACTIVE", deletedAt: null },
+    });
+    const role = await db.role.findFirst({
+      where: { companyId: session.companyId, name: "Owner", deletedAt: null },
+    });
+    if (!company || !role) throw new AccessDeniedError("Active company not found");
+    return {
+      session,
+      companyId: company.id,
+      membership: {
+        id: `super-admin:${company.id}`,
+        userId: session.userId,
+        companyId: company.id,
+        roleId: role.id,
+        status: "ACTIVE" as const,
+        createdAt: company.createdAt,
+        updatedAt: company.updatedAt,
+        company,
+        role,
+      },
+    };
+  }
+
   const membership = await db.membership.findFirst({
     where: {
       userId: session.userId,
@@ -28,4 +53,3 @@ export async function tenantEmployeeRepo() {
     byId: (id: string) => db.employee.findFirst({ where: { id, companyId, deletedAt: null } }),
   };
 }
-
