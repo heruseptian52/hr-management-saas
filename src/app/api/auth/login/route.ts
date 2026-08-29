@@ -8,7 +8,8 @@ import { z } from "zod";
 const loginSchema = z.object({ email: z.string().trim().toLowerCase().email(), password: z.string().min(8).max(128) });
 
 function redirectWithError(request: NextRequest, code: string) {
-  return NextResponse.redirect(new URL(`/login?error=${code}`, request.url), 303);
+  const appUrl = process.env.APP_URL ?? request.nextUrl.origin;
+  return NextResponse.redirect(new URL(`/login?error=${code}`, appUrl), 303);
 }
 
 export async function POST(request: NextRequest) {
@@ -20,24 +21,22 @@ export async function POST(request: NextRequest) {
   const rateKey = `${ip}:${parsed.data.email}`;
   if (!consumeLoginAttempt(rateKey).allowed) return redirectWithError(request, "rate_limited");
 
-  const user = await db.user.findFirst({
-    where: { email: parsed.data.email, isActive: true, deletedAt: null },
-    include: {
-      memberships: {
-        where: { status: "ACTIVE", company: { status: "ACTIVE", deletedAt: null } },
-        include: { company: true, role: true },
-        orderBy: { createdAt: "asc" },
-      },
-    },
-  });
+  const user = await db.user.findUnique({ where: { email: parsed.data.email } });
   const valid = user ? await bcrypt.compare(parsed.data.password, user.passwordHash) : false;
 
-  if (!user || !valid) {
+  if (!user || !user.isActive || user.deletedAt || !valid) {
     if (user) await db.loginHistory.create({ data: { userId: user.id, success: false, ipAddress: ip, userAgent: request.headers.get("user-agent") } });
     return redirectWithError(request, "invalid_credentials");
   }
 
-  const membership = user.memberships[0] ?? null;
+  const membership = await db.membership.findFirst({
+    where: {
+      userId: user.id,
+      status: "ACTIVE",
+      company: { is: { status: "ACTIVE", deletedAt: null } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
   if (user.platformRole !== "SUPER_ADMIN" && !membership) return redirectWithError(request, "company_unavailable");
 
   const token = await createSessionToken({
@@ -53,8 +52,8 @@ export async function POST(request: NextRequest) {
   ]);
   clearLoginAttempts(rateKey);
 
-  const response = NextResponse.redirect(new URL(user.platformRole === "SUPER_ADMIN" ? "/platform" : "/dashboard", request.url), 303);
+  const appUrl = process.env.APP_URL ?? request.nextUrl.origin;
+  const response = NextResponse.redirect(new URL(user.platformRole === "SUPER_ADMIN" ? "/platform" : "/dashboard", appUrl), 303);
   response.cookies.set(sessionCookie.name, token, sessionCookie.options);
   return response;
 }
-
