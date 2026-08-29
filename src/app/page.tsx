@@ -1,1 +1,11 @@
-export default function Home(){return <main><section className="hero"><span className="badge">MULTI-COMPANY HR PLATFORM</span><h1>Kelola SDM, jadwal, dan absensi dalam satu platform.</h1><p>Arsitektur multi-tenant dengan isolasi data perusahaan, multi-cabang, Bahasa Indonesia & English.</p><div className="actions"><a href="/dashboard">Buka Dashboard</a><a className="secondary" href="/login">Masuk</a></div></section></main>}
+export default function Home() {
+  return <main><section className="card">
+    <div className="eyebrow">HR MANAGEMENT SAAS</div>
+    <h1>Kelola SDM lintas perusahaan dengan aman.</h1>
+    <p>Fondasi P1 sedang dibangun dengan isolasi tenant di backend dan database. Project ini berdiri sendiri dan tidak terhubung dengan website Panboy Community.</p>
+    <div className="grid">
+      <div className="item">Multi-company</div><div className="item">RBAC permissions</div><div className="item">Audit-ready</div>
+    </div>
+  </section></main>;
+}
+
