@@ -19,5 +19,7 @@ export const ownerPermissions: PermissionMap = {
   branches: [...actions],
   departments: [...actions],
   positions: [...actions],
+  shifts: [...actions],
+  schedules: [...actions],
   audit: ["view", "export"],
 };

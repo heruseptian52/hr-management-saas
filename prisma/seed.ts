@@ -22,6 +22,9 @@ async function createCompany(code: string, name: string, ownerEmail: string, emp
   const branch = await db.branch.upsert({ where: { companyId_code: { companyId: company.id, code: "HQ" } }, update: {}, create: { companyId: company.id, code: "HQ", name: "Kantor Pusat" } });
   const department = await db.department.upsert({ where: { companyId_code: { companyId: company.id, code: "OPS" } }, update: {}, create: { companyId: company.id, code: "OPS", name: "Operasional" } });
   const position = await db.position.upsert({ where: { companyId_code: { companyId: company.id, code: "STAFF" } }, update: {}, create: { companyId: company.id, code: "STAFF", name: "Staff" } });
+  for (const shift of [{ code: "PAGI", name: "Pagi", startTime: "08:00", endTime: "16:00", color: "#2563EB" }, { code: "SIANG", name: "Siang", startTime: "14:00", endTime: "22:00", color: "#F59E0B" }, { code: "MALAM", name: "Malam", startTime: "22:00", endTime: "06:00", color: "#7C3AED" }]) {
+    await db.shift.upsert({ where: { companyId_code: { companyId: company.id, code: shift.code } }, update: {}, create: { companyId: company.id, ...shift } });
+  }
   for (let index = 1; index <= 10; index++) {
     const employeeNumber = `${employeePrefix}${String(index).padStart(3, "0")}`;
     await db.employee.upsert({

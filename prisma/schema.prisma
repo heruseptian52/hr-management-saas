@@ -39,6 +39,17 @@ enum EmploymentType {
   PART_TIME
 }
 
+enum ScheduleStatus {
+  DRAFT
+  PUBLISHED
+  LOCKED
+}
+
+enum AssignmentType {
+  WORK
+  OFF
+}
+
 model Company {
   id              String   @id @default(cuid())
   code            String   @unique
@@ -64,6 +75,9 @@ model Company {
   positions       Position[]
   employees       Employee[]
   auditLogs       AuditLog[]
+  shifts          Shift[]
+  schedules       Schedule[]
+  assignments     ScheduleAssignment[]
 
   @@index([status, deletedAt])
 }
@@ -132,6 +146,7 @@ model Branch {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
   employees Employee[]
+  shifts    Shift[]
 
   @@unique([companyId, code])
   @@index([companyId, deletedAt])
@@ -147,6 +162,7 @@ model Department {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
   employees Employee[]
+  shifts    Shift[]
 
   @@unique([companyId, code])
   @@index([companyId, deletedAt])
@@ -191,9 +207,72 @@ model Employee {
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   deletedAt         DateTime?
+  assignments       ScheduleAssignment[]
 
   @@unique([companyId, employeeNumber])
   @@index([companyId, branchId, departmentId, deletedAt])
+}
+
+model Shift {
+  id               String   @id @default(cuid())
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  code             String
+  name             String
+  startTime        String
+  endTime          String
+  breakMinutes     Int      @default(60)
+  lateToleranceMin Int      @default(0)
+  color            String   @default("#2563EB")
+  branchId         String?
+  branch           Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  departmentId     String?
+  department       Department? @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime?
+  assignments      ScheduleAssignment[]
+
+  @@unique([companyId, code])
+  @@index([companyId, branchId, departmentId, deletedAt])
+}
+
+model Schedule {
+  id           String         @id @default(cuid())
+  companyId    String
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  month        DateTime
+  name         String
+  status       ScheduleStatus @default(DRAFT)
+  branchId     String?
+  departmentId String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  publishedAt  DateTime?
+  assignments  ScheduleAssignment[]
+
+  @@unique([companyId, month, branchId, departmentId])
+  @@index([companyId, status, month])
+}
+
+model ScheduleAssignment {
+  id         String         @id @default(cuid())
+  companyId  String
+  company    Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  scheduleId String
+  schedule   Schedule       @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee   Employee       @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  shiftId    String?
+  shift      Shift?         @relation(fields: [shiftId], references: [id], onDelete: Restrict)
+  date       DateTime
+  type       AssignmentType @default(WORK)
+  notes      String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([scheduleId, employeeId, date])
+  @@index([companyId, date, employeeId])
 }
 
 model LoginHistory {
@@ -227,4 +306,3 @@ model AuditLog {
   @@index([companyId, module, createdAt])
   @@index([actorUserId, createdAt])
 }
-

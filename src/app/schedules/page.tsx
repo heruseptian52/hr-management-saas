@@ -1,0 +1,26 @@
+import { requireTenant } from "@/lib/tenant";
+import { db } from "@/lib/db";
+import { hasPermission } from "@/lib/permissions";
+import { redirect } from "next/navigation";
+
+function validMonth(value?: string) { return /^\d{4}-\d{2}$/.test(value ?? "") ? value! : new Date().toISOString().slice(0, 7); }
+
+export default async function SchedulesPage({ searchParams }: { searchParams: Promise<{ month?: string; saved?: string; error?: string }> }) {
+  let tenant; try { tenant = await requireTenant(); } catch { redirect("/login"); }
+  const permissions = tenant.membership.role.permissions;
+  if (!hasPermission(permissions, "schedules", "view") && !hasPermission(permissions, "shifts", "view")) redirect("/dashboard");
+  const query = await searchParams, monthValue = validMonth(query.month), [year, month] = monthValue.split("-").map(Number), monthDate = new Date(Date.UTC(year, month - 1, 1));
+  const [shifts, branches, departments, schedule] = await Promise.all([
+    db.shift.findMany({ where: { companyId: tenant.companyId, deletedAt: null }, orderBy: { startTime: "asc" } }), db.branch.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }), db.department.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }),
+    db.schedule.findFirst({ where: { companyId: tenant.companyId, month: monthDate, branchId: null, departmentId: null }, include: { assignments: { include: { employee: true, shift: true }, orderBy: [{ employee: { fullName: "asc" } }, { date: "asc" }] } } }),
+  ]);
+  const employeeRows = new Map<string, typeof schedule extends null ? never : NonNullable<typeof schedule>["assignments"]>();
+  schedule?.assignments.forEach(item => employeeRows.set(item.employeeId, [...(employeeRows.get(item.employeeId) ?? []), item]));
+  return <main className="settings-page"><section className="settings-card schedule-card"><header><div><span className="eyebrow">PANBOY HR · P3</span><h1>Jadwal & shift</h1><p>Jadwal bulanan otomatis yang tetap dapat diedit manual.</p></div><a href="/dashboard">Kembali</a></header>
+    {query.saved && <div className="form-success">Perubahan berhasil disimpan.</div>}{query.error && <div className="form-error">Operasi gagal. Pastikan karyawan dan shift sudah tersedia.</div>}
+    <div className="schedule-tools"><form method="get"><label>Bulan<input name="month" type="month" defaultValue={monthValue}/></label><button>Tampilkan</button></form>{hasPermission(permissions, "schedules", "create") && <form action="/api/schedules/generate" method="post"><input name="month" type="hidden" value={monthValue}/><select name="branchId"><option value="">Semua cabang</option>{branches.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><select name="departmentId"><option value="">Semua departemen</option>{departments.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select><button>Generate ulang draft</button></form>}</div>
+    <div className="shift-strip">{shifts.map(shift => <span key={shift.id} style={{borderColor:shift.color}}><b>{shift.code}</b>{shift.startTime}–{shift.endTime}</span>)}</div>
+    {schedule ? <div className="schedule-table"><div className="schedule-row schedule-heading"><b>Karyawan</b>{Array.from({ length: new Date(Date.UTC(year, month, 0)).getUTCDate() }, (_, index) => <b key={index}>{index + 1}</b>)}</div>{[...employeeRows.values()].map(assignments => <div className="schedule-row" key={assignments[0].employeeId}><strong>{assignments[0].employee.fullName}</strong>{assignments.map(item => <form action="/api/schedules/assignment" method="post" key={item.id}><input type="hidden" name="assignmentId" value={item.id}/><input type="hidden" name="returnMonth" value={monthValue}/><select aria-label={`${item.employee.fullName} tanggal ${item.date.getUTCDate()}`} name="shiftId" defaultValue={item.type === "OFF" ? "OFF" : item.shiftId ?? "OFF"} onChange={undefined}><option value="OFF">L</option>{shifts.map(shift => <option key={shift.id} value={shift.id}>{shift.code}</option>)}</select><button aria-label="Simpan">✓</button></form>)}</div>)}</div> : <div className="empty-state"><h2>Belum ada jadwal {monthValue}</h2><p>Gunakan tombol Generate untuk membuat draft jadwal otomatis.</p></div>}
+    {hasPermission(permissions, "shifts", "create") && <form action="/api/shifts" method="post" className="settings-form shift-form"><h2 className="wide">Tambah custom shift</h2><label>Kode<input name="code" required/></label><label>Nama shift<input name="name" required/></label><label>Jam masuk<input name="startTime" type="time" required/></label><label>Jam pulang<input name="endTime" type="time" required/></label><label>Istirahat (menit)<input name="breakMinutes" type="number" min="0" max="480" defaultValue="60"/></label><label>Toleransi terlambat<input name="lateToleranceMin" type="number" min="0" max="180" defaultValue="0"/></label><label>Warna<input name="color" type="color" defaultValue="#2563EB"/></label><button className="wide">Tambah shift</button></form>}
+  </section></main>;
+}

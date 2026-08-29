@@ -118,7 +118,26 @@ p { color:var(--muted); line-height:1.7; }
 .timeline article span { color:var(--muted); font-size:12px; }
 .timeline article strong { display:block; margin-top:4px; }
 .timeline article p { margin:2px 0 0; font-size:13px; }
+.schedule-card { max-width:1500px; }
+.schedule-tools { display:flex; justify-content:space-between; gap:12px; margin:22px 0; }
+.schedule-tools form { display:flex; gap:8px; align-items:flex-end; }
+.schedule-tools input,.schedule-tools select { padding:10px; border:1px solid #cbd5e1; border-radius:8px; background:white; }
+.schedule-tools label { font-size:12px; font-weight:800; }
+.schedule-tools label input { display:block; margin-top:4px; }
+.schedule-tools button { padding:10px 14px; border:0; border-radius:8px; color:white; background:var(--primary); font-weight:800; }
+.shift-strip { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+.shift-strip span { display:flex; gap:6px; border-left:5px solid; background:#f8fafc; padding:8px 10px; border-radius:7px; font-size:12px; }
+.schedule-table { overflow:auto; border:1px solid #e2e8f0; border-radius:12px; }
+.schedule-row { min-width:1250px; display:grid; grid-template-columns:180px repeat(31,minmax(34px,1fr)); border-bottom:1px solid #e2e8f0; align-items:center; }
+.schedule-row:last-child { border-bottom:0; }
+.schedule-row>strong,.schedule-row>b { padding:8px; font-size:11px; }
+.schedule-heading { background:#f8fafc; }
+.schedule-row form { display:flex; padding:2px; }
+.schedule-row form select { width:100%; min-width:28px; border:0; background:#eff6ff; font-size:9px; padding:5px 1px; }
+.schedule-row form button { display:none; }
+.empty-state { text-align:center; padding:45px; background:#f8fafc; border-radius:14px; }
+.shift-form { margin-top:25px; border-top:1px solid #e2e8f0; padding-top:15px; }
 
 @media(max-width:900px){.auth-page{grid-template-columns:1fr}.auth-brand{min-height:42vh;padding:40px}.auth-brand h1{margin-top:35px}.login-card{margin:30px auto}.dashboard-shell{grid-template-columns:1fr}.sidebar{min-height:auto}.sidebar nav{grid-template-columns:repeat(2,1fr)}.sidebar form{margin-top:20px}.stats-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:1000px){.org-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:560px){.card{padding:22px}.grid{grid-template-columns:1fr}.auth-brand h1{font-size:42px}.login-card{padding:25px}.dashboard-content{padding:22px}.stats-grid{grid-template-columns:1fr}.dashboard-content>header{display:block}.tenant-chip{display:inline-block}.phase-card{align-items:flex-start;gap:12px}.sidebar nav{grid-template-columns:1fr}.platform-page,.settings-page{padding:15px}.company-list article{align-items:flex-start;gap:15px;display:grid}.company-list b{text-align:left}.company-actions{display:grid}.settings-card{padding:20px}.settings-card>header{display:block}.settings-form,.create-company>div,.org-grid{grid-template-columns:1fr}.settings-form .wide{grid-column:auto}.platform-actions{display:grid}.search-form{display:grid}}
+@media(max-width:560px){.card{padding:22px}.grid{grid-template-columns:1fr}.auth-brand h1{font-size:42px}.login-card{padding:25px}.dashboard-content{padding:22px}.stats-grid{grid-template-columns:1fr}.dashboard-content>header{display:block}.tenant-chip{display:inline-block}.phase-card{align-items:flex-start;gap:12px}.sidebar nav{grid-template-columns:1fr}.platform-page,.settings-page{padding:15px}.company-list article{align-items:flex-start;gap:15px;display:grid}.company-list b{text-align:left}.company-actions{display:grid}.settings-card{padding:20px}.settings-card>header{display:block}.settings-form,.create-company>div,.org-grid{grid-template-columns:1fr}.settings-form .wide{grid-column:auto}.platform-actions,.search-form,.schedule-tools,.schedule-tools form{display:grid}}
