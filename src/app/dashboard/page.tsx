@@ -15,7 +15,7 @@ export default async function Dashboard() {
   const cards = [["Karyawan aktif", employees], ["Cabang", branches], ["Departemen", departments], ["Role Anda", membership.role.name]];
   return <main className="dashboard-shell">
     <aside className="sidebar"><div className="sidebar-brand"><span>PH</span><strong>PANBOY HR</strong></div>
-      <nav><a className="active" href="/dashboard">Ringkasan</a><a href="#">Karyawan <small>Segera</small></a>{hasPermission(membership.role.permissions, "roles", "view") && <a href="/settings/roles">Role & Akses</a>}{hasPermission(membership.role.permissions, "company", "view") && <a href="/settings/company">Perusahaan</a>}</nav>
+      <nav><a className="active" href="/dashboard">Ringkasan</a>{hasPermission(membership.role.permissions, "employees", "view") && <a href="/employees">Karyawan</a>}{hasPermission(membership.role.permissions, "branches", "view") && <a href="/organization">Organisasi</a>}{hasPermission(membership.role.permissions, "roles", "view") && <a href="/settings/roles">Role & Akses</a>}{hasPermission(membership.role.permissions, "company", "view") && <a href="/settings/company">Perusahaan</a>}</nav>
       <form action="/api/auth/logout" method="post"><button>Keluar</button></form>
     </aside>
     <section className="dashboard-content">
