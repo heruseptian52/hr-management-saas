@@ -10,6 +10,8 @@ export type Session = {
   platformRole: "SUPER_ADMIN" | "COMPANY_USER";
 };
 
+export const SESSION_TTL_SECONDS = 60 * 60 * 8;
+
 function secret() {
   const value = process.env.AUTH_SECRET;
   if (!value || value.length < 32) throw new Error("AUTH_SECRET must contain at least 32 characters");
@@ -37,6 +39,5 @@ export async function readSession(): Promise<Session | null> {
 
 export const sessionCookie = {
   name: COOKIE_NAME,
-  options: { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" as const, path: "/", maxAge: 60 * 60 * 8 },
+  options: { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" as const, path: "/", maxAge: SESSION_TTL_SECONDS },
 };
-

@@ -54,6 +54,8 @@ Open `http://localhost:3000`. Health check: `http://localhost:3000/api/health`.
 
 Never commit `.env`, credentials, API keys, or production secrets.
 
+`SEED_DEMO_PASSWORD` is required only when running the local demo seed. Choose your own value of at least 12 characters; the repository never stores a demo password.
+
 ## Database and tenant isolation
 
 Every company-owned table includes `companyId`. Backend repositories obtain the company from the verified server session and always include it in database queries. Client-provided `companyId` values must never be trusted. Composite unique constraints prevent cross-company key collisions. Deletes are soft deletes unless an explicitly reviewed retention workflow requires otherwise.
@@ -82,4 +84,3 @@ The project is builder-independent. It can run on any Node.js host supporting Po
 ## Repository target
 
 `https://github.com/heruseptian52/hr-management-saas`
-
