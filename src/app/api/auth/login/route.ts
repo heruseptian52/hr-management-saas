@@ -21,7 +21,16 @@ export async function POST(request: NextRequest) {
   const rateKey = `${ip}:${parsed.data.email}`;
   if (!consumeLoginAttempt(rateKey).allowed) return redirectWithError(request, "rate_limited");
 
-  const user = await db.user.findUnique({ where: { email: parsed.data.email } });
+  const user = await db.user.findUnique({
+    where: { email: parsed.data.email },
+    select: {
+      id: true,
+      passwordHash: true,
+      platformRole: true,
+      isActive: true,
+      deletedAt: true,
+    },
+  });
   const valid = user ? await bcrypt.compare(parsed.data.password, user.passwordHash) : false;
 
   if (!user || !user.isActive || user.deletedAt || !valid) {
@@ -36,6 +45,7 @@ export async function POST(request: NextRequest) {
       company: { is: { status: "ACTIVE", deletedAt: null } },
     },
     orderBy: { createdAt: "asc" },
+    select: { companyId: true, roleId: true },
   });
   if (user.platformRole !== "SUPER_ADMIN" && !membership) return redirectWithError(request, "company_unavailable");
 
@@ -47,7 +57,6 @@ export async function POST(request: NextRequest) {
   });
 
   await db.$transaction([
-    db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }),
     db.loginHistory.create({ data: { userId: user.id, success: true, ipAddress: ip, userAgent: request.headers.get("user-agent") } }),
   ]);
   clearLoginAttempts(rateKey);
