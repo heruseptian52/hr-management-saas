@@ -81,6 +81,16 @@ In production, run committed Prisma migrations through the deployment pipeline a
 
 The project is builder-independent. It can run on any Node.js host supporting PostgreSQL, including Docker-based VPS infrastructure. Configure environment variables in the hosting provider and never place secrets in GitHub.
 
+### Railway preview deployment
+
+1. Create a Railway project from this GitHub repository.
+2. Add a PostgreSQL service and expose its `DATABASE_URL` to the web service.
+3. Set `AUTH_SECRET` to a random value of at least 32 characters and set `APP_URL` to the generated public URL.
+4. Railway uses `railway.json` to build, synchronize the schema on the initial empty database, start the app, and verify `/api/health`.
+5. Set `SEED_DEMO_PASSWORD` temporarily, run `npm run db:seed` once, then remove that variable if demo reseeding is not needed.
+
+The initial Railway preview uses `prisma db push` only against a newly provisioned empty database. Subsequent production schema changes must be represented by reviewed Prisma migration files and deployed with `npm run db:deploy`.
+
 ## Repository target
 
 `https://github.com/heruseptian52/hr-management-saas`
