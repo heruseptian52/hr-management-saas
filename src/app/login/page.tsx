@@ -15,7 +15,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   return <main className="auth-page">
     <section className="auth-brand">
       <span className="brand-mark">HR</span>
-      <div><strong>HR Management</strong><small>Multi-Company Platform</small></div>
+      <div><strong>PANBOY HR</strong><small>Smart HR & Employee Management</small></div>
       <h1>Kelola tim dengan lebih teratur.</h1>
       <p>Jadwal, karyawan, absensi, dan laporan perusahaan dalam satu platform yang aman.</p>
       <div className="security-note">Data setiap perusahaan dipisahkan dan dilindungi.</div>

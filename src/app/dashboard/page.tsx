@@ -1,5 +1,6 @@
 import { requireTenant } from "@/lib/tenant";
 import { db } from "@/lib/db";
+import { hasPermission } from "@/lib/permissions";
 import { redirect } from "next/navigation";
 
 export default async function Dashboard() {
@@ -13,8 +14,8 @@ export default async function Dashboard() {
   ]);
   const cards = [["Karyawan aktif", employees], ["Cabang", branches], ["Departemen", departments], ["Role Anda", membership.role.name]];
   return <main className="dashboard-shell">
-    <aside className="sidebar"><div className="sidebar-brand"><span>HR</span><strong>{membership.company.name}</strong></div>
-      <nav><a className="active" href="/dashboard">Ringkasan</a><a href="#">Karyawan <small>Segera</small></a><a href="#">Organisasi <small>Segera</small></a><a href="#">Pengaturan <small>Segera</small></a></nav>
+    <aside className="sidebar"><div className="sidebar-brand"><span>PH</span><strong>PANBOY HR</strong></div>
+      <nav><a className="active" href="/dashboard">Ringkasan</a><a href="#">Karyawan <small>Segera</small></a>{hasPermission(membership.role.permissions, "roles", "view") && <a href="/settings/roles">Role & Akses</a>}{hasPermission(membership.role.permissions, "company", "view") && <a href="/settings/company">Perusahaan</a>}</nav>
       <form action="/api/auth/logout" method="post"><button>Keluar</button></form>
     </aside>
     <section className="dashboard-content">
