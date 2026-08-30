@@ -4,7 +4,7 @@ import { generateMonthlySchedule } from "@/lib/scheduling";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-const schema = z.object({ month: z.string().regex(/^\d{4}-\d{2}$/), branchId: z.string().cuid().or(z.literal("")), departmentId: z.string().cuid().or(z.literal("")) });
+const schema = z.object({ month: z.string().regex(/^\d{4}-\d{2}$/), branchId: z.string().cuid().or(z.literal("")), departmentId: z.string().cuid().or(z.literal("")), rotation: z.enum(["DAILY", "WEEKLY", "FIXED"]).default("DAILY") });
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     ]);
     if (!employees.length || !shifts.length) throw new Error("MISSING_DATA");
     const monthDate = new Date(Date.UTC(year, month - 1, 1));
-    const generated = generateMonthlySchedule(year, month, employees, shifts.map(shift => shift.id));
+    const generated = generateMonthlySchedule(year, month, employees, shifts.map(shift => shift.id), parsed.data.rotation);
     const schedule = await db.$transaction(async transaction => {
       const existing = await transaction.schedule.findFirst({ where: { companyId: tenant.companyId, month: monthDate, branchId, departmentId } });
       const current = existing ? await transaction.schedule.update({ where: { id: existing.id }, data: { status: "DRAFT", name: `Jadwal ${parsed.data.month}` } }) : await transaction.schedule.create({ data: { companyId: tenant.companyId, month: monthDate, name: `Jadwal ${parsed.data.month}`, branchId, departmentId } });
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       await transaction.scheduleAssignment.createMany({ data: generated.map(item => ({ companyId: tenant.companyId, scheduleId: current.id, employeeId: item.employeeId, shiftId: item.shiftId, type: item.type, date: new Date(Date.UTC(year, month - 1, item.day)) })) });
       return current;
     });
-    await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "GENERATE", module: "schedules", entityType: "Schedule", entityId: schedule.id, newValue: { month: parsed.data.month, employees: employees.length, assignments: generated.length } } });
+    await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "GENERATE", module: "schedules", entityType: "Schedule", entityId: schedule.id, newValue: { month: parsed.data.month, employees: employees.length, assignments: generated.length, rotation: parsed.data.rotation } } });
     return NextResponse.redirect(new URL(`/schedules?month=${parsed.data.month}&branchId=${branchId ?? ""}&departmentId=${departmentId ?? ""}&saved=schedule`, request.url), 303);
   } catch { return NextResponse.redirect(new URL("/schedules?error=generation", request.url), 303); }
 }

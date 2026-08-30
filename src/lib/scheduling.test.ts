@@ -9,4 +9,14 @@ describe("monthly scheduling engine", () => {
     expect(result.filter(item => item.employeeId === "b" && item.type === "OFF")).toHaveLength(4);
   });
   it("requires at least one shift", () => expect(() => generateMonthlySchedule(2026, 9, [], [])).toThrow());
+  it("supports weekly rotation", () => {
+    const result = generateMonthlySchedule(2026, 9, [{ id: "a", monthlyDaysOff: 0 }], ["pagi", "malam"], "WEEKLY");
+    expect(result.find(item => item.day === 1)?.shiftId).toBe("pagi");
+    expect(result.find(item => item.day === 7)?.shiftId).toBe("pagi");
+    expect(result.find(item => item.day === 8)?.shiftId).toBe("malam");
+  });
+  it("supports a fixed shift per employee", () => {
+    const result = generateMonthlySchedule(2026, 9, [{ id: "a", monthlyDaysOff: 0 }], ["pagi", "malam"], "FIXED");
+    expect(new Set(result.map(item => item.shiftId))).toEqual(new Set(["pagi"]));
+  });
 });
