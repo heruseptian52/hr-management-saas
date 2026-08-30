@@ -150,7 +150,15 @@ p { color:var(--muted); line-height:1.7; }
 .schedule-heading { background:#f8fafc; }
 .schedule-row form { display:flex; padding:2px; }
 .schedule-row form select { width:100%; min-width:28px; border:0; background:#eff6ff; font-size:9px; padding:5px 1px; }
-.schedule-row form button { display:none; }
+.schedule-row form button { width:18px; border:0; padding:0; background:#dbeafe; color:#1d4ed8; cursor:pointer; font-weight:900; }
+.schedule-create-actions { display:flex; gap:8px; }
+.schedule-create-actions form { display:block; }
+.schedule-tools .secondary-button { background:#e2e8f0; color:#0f172a; }
+.bulk-schedule-form { display:grid; grid-template-columns:2fr repeat(3,1fr) auto; gap:8px; align-items:end; padding:12px; margin:12px 0; border:1px solid #dbeafe; background:#f8fbff; border-radius:10px; }
+.bulk-schedule-form label { font-size:11px; font-weight:800; }
+.bulk-schedule-form select,.bulk-schedule-form input { display:block; width:100%; margin-top:4px; padding:8px; border:1px solid #cbd5e1; border-radius:7px; background:white; }
+.bulk-schedule-form button { padding:9px 12px; border:0; border-radius:8px; background:var(--primary); color:white; font-weight:800; }
+.schedule-warnings { display:grid; gap:4px; margin:12px 0; padding:12px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; font-size:12px; }
 .locked-cell { text-align:center; padding:6px 1px; font-size:9px; background:#f8fafc; }
 .empty-state { text-align:center; padding:45px; background:#f8fafc; border-radius:14px; }
 .shift-form { margin-top:25px; border-top:1px solid #e2e8f0; padding-top:15px; }

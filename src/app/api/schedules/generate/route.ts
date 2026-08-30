@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
       return current;
     });
     await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "GENERATE", module: "schedules", entityType: "Schedule", entityId: schedule.id, newValue: { month: parsed.data.month, employees: employees.length, assignments: generated.length } } });
-    return NextResponse.redirect(new URL(`/schedules?month=${parsed.data.month}&saved=schedule`, request.url), 303);
+    return NextResponse.redirect(new URL(`/schedules?month=${parsed.data.month}&branchId=${branchId ?? ""}&departmentId=${departmentId ?? ""}&saved=schedule`, request.url), 303);
   } catch { return NextResponse.redirect(new URL("/schedules?error=generation", request.url), 303); }
 }
-
