@@ -50,6 +50,13 @@ enum AssignmentType {
   OFF
 }
 
+enum SwapStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 enum AttendanceStatus {
   PRESENT
   LATE
@@ -296,6 +303,25 @@ model ScheduleAssignment {
 
   @@unique([scheduleId, employeeId, date])
   @@index([companyId, date, employeeId])
+}
+
+model ScheduleSwapRequest {
+  id               String     @id @default(cuid())
+  companyId        String
+  scheduleId       String
+  requesterUserId  String
+  fromAssignmentId String
+  toAssignmentId   String
+  reason           String?
+  status           SwapStatus @default(PENDING)
+  reviewedByUserId String?
+  reviewNotes      String?
+  reviewedAt       DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([companyId, scheduleId, status, createdAt])
+  @@index([companyId, requesterUserId, createdAt])
 }
 
 model Attendance {

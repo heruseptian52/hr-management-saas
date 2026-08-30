@@ -171,6 +171,19 @@ p { color:var(--muted); line-height:1.7; }
 .bulk-schedule-form select,.bulk-schedule-form input { display:block; width:100%; margin-top:4px; padding:8px; border:1px solid #cbd5e1; border-radius:7px; background:white; }
 .bulk-schedule-form button { padding:9px 12px; border:0; border-radius:8px; background:var(--primary); color:white; font-weight:800; }
 .schedule-warnings { display:grid; gap:4px; margin:12px 0; padding:12px; color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; font-size:12px; }
+.swap-panel { margin:12px 0; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; }
+.swap-panel summary { cursor:pointer; padding:12px; font-weight:900; }
+.swap-panel form { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:8px; align-items:end; padding:0 12px 12px; }
+.swap-panel label { font-size:11px; font-weight:800; }
+.swap-panel select,.swap-panel input,.swap-review input { display:block; width:100%; margin-top:4px; padding:8px; border:1px solid #cbd5e1; border-radius:7px; background:white; }
+.swap-panel button,.swap-review button { padding:9px 12px; border:0; border-radius:8px; background:var(--primary); color:white; font-weight:800; }
+.swap-list { margin:14px 0; }
+.swap-list h2 { font-size:18px; }
+.swap-list article { display:grid; grid-template-columns:1fr auto auto; gap:12px; align-items:center; padding:12px; border:1px solid #e2e8f0; border-radius:10px; margin-top:8px; }
+.swap-list article>div:first-child { display:grid; gap:3px; }
+.swap-list small { color:#64748b; }
+.swap-pending { color:#b45309; }.swap-approved { color:#15803d; }.swap-rejected { color:#b91c1c; }
+.swap-review { display:flex; gap:6px; }.swap-review form { display:flex; gap:5px; }.swap-review .danger-button { background:#dc2626; }
 .locked-cell { text-align:center; padding:6px 1px; font-size:9px; background:#f8fafc; }
 .empty-state { text-align:center; padding:45px; background:#f8fafc; border-radius:14px; }
 .shift-form { margin-top:25px; border-top:1px solid #e2e8f0; padding-top:15px; }
