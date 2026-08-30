@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { createSessionToken, sessionCookie } from "@/lib/auth";
+import { appUrl } from "@/lib/app-url";
 import { clearLoginAttempts, consumeLoginAttempt } from "@/lib/rate-limit";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,8 +9,7 @@ import { z } from "zod";
 const loginSchema = z.object({ email: z.string().trim().toLowerCase().email(), password: z.string().min(8).max(128) });
 
 function redirectWithError(request: NextRequest, code: string) {
-  const appUrl = process.env.APP_URL ?? request.nextUrl.origin;
-  return NextResponse.redirect(new URL(`/login?error=${code}`, appUrl), 303);
+  return NextResponse.redirect(new URL(`/login?error=${code}`, appUrl(request)), 303);
 }
 
 export async function POST(request: NextRequest) {
@@ -61,8 +61,7 @@ export async function POST(request: NextRequest) {
   ]);
   clearLoginAttempts(rateKey);
 
-  const appUrl = process.env.APP_URL ?? request.nextUrl.origin;
-  const response = NextResponse.redirect(new URL(user.platformRole === "SUPER_ADMIN" ? "/platform" : "/dashboard", appUrl), 303);
+  const response = NextResponse.redirect(new URL(user.platformRole === "SUPER_ADMIN" ? "/platform" : "/dashboard", appUrl(request)), 303);
   response.cookies.set(sessionCookie.name, token, sessionCookie.options);
   return response;
 }

@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -9,9 +10,9 @@ export async function POST(request: NextRequest) {
   try {
     const tenant = await requirePermission("shifts", "create");
     const parsed = schema.safeParse(Object.fromEntries(await request.formData()));
-    if (!parsed.success) return NextResponse.redirect(new URL("/schedules?error=shift_validation", request.url), 303);
+    if (!parsed.success) return NextResponse.redirect(new URL("/schedules?error=shift_validation", appUrl(request)), 303);
     const shift = await db.shift.create({ data: { companyId: tenant.companyId, ...parsed.data } });
     await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "CREATE", module: "shifts", entityType: "Shift", entityId: shift.id, newValue: parsed.data } });
-    return NextResponse.redirect(new URL("/schedules?saved=shift", request.url), 303);
-  } catch { return NextResponse.redirect(new URL("/schedules?error=shift_duplicate", request.url), 303); }
+    return NextResponse.redirect(new URL("/schedules?saved=shift", appUrl(request)), 303);
+  } catch { return NextResponse.redirect(new URL("/schedules?error=shift_duplicate", appUrl(request)), 303); }
 }

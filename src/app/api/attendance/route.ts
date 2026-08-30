@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -12,7 +13,6 @@ const schema = z.object({
   notes: z.string().trim().max(500),
 });
 
-const appUrl = (request: NextRequest) => process.env.APP_URL ?? request.nextUrl.origin;
 const atTime = (date: Date, time: string) => time ? new Date(`${date.toISOString().slice(0, 10)}T${time}:00`) : null;
 
 export async function POST(request: NextRequest) {

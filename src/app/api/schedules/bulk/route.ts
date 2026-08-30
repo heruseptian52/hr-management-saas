@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -27,6 +28,6 @@ export async function POST(request: NextRequest) {
       db.scheduleAssignment.updateMany({ where, data: parsed.shiftId === "OFF" ? { type: "OFF", shiftId: null } : { type: "WORK", shiftId: parsed.shiftId } }),
       db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "BULK_EDIT", module: "schedules", entityType: "Schedule", entityId: schedule.id, newValue: { employeeId: parsed.employeeId, shiftId: parsed.shiftId, startDay: parsed.startDay, endDay: parsed.endDay, count } } }),
     ]);
-    return NextResponse.redirect(new URL(`/schedules?month=${parsed.returnMonth}&saved=bulk`, request.url), 303);
-  } catch { return NextResponse.redirect(new URL(`/schedules?month=${returnMonth}&error=bulk`, request.url), 303); }
+    return NextResponse.redirect(new URL(`/schedules?month=${parsed.returnMonth}&saved=bulk`, appUrl(request)), 303);
+  } catch { return NextResponse.redirect(new URL(`/schedules?month=${returnMonth}&error=bulk`, appUrl(request)), 303); }
 }

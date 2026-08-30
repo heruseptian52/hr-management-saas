@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
       db.schedule.update({ where: { id: schedule.id }, data: { status: parsed.status, publishedAt: parsed.status === "PUBLISHED" ? new Date() : schedule.publishedAt } }),
       db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "STATUS_CHANGE", module: "schedules", entityType: "Schedule", entityId: schedule.id, previousValue: { status: schedule.status }, newValue: { status: parsed.status } } }),
     ]);
-    return NextResponse.redirect(new URL(`/schedules?month=${parsed.returnMonth}&saved=status`, request.url), 303);
-  } catch { return NextResponse.redirect(new URL("/schedules?error=status", request.url), 303); }
+    return NextResponse.redirect(new URL(`/schedules?month=${parsed.returnMonth}&saved=status`, appUrl(request)), 303);
+  } catch { return NextResponse.redirect(new URL("/schedules?error=status", appUrl(request)), 303); }
 }
 

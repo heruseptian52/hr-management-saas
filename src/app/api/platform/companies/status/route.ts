@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/app-url";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/platform";
 import { NextRequest, NextResponse } from "next/server";
@@ -15,9 +16,9 @@ export async function POST(request: NextRequest) {
       db.company.update({ where: { id: previous.id }, data: { status: parsed.data.status } }),
       db.auditLog.create({ data: { companyId: previous.id, actorUserId: session.userId, action: "STATUS_CHANGE", module: "platform.company", entityType: "Company", entityId: previous.id, previousValue: { status: previous.status }, newValue: { status: parsed.data.status } } }),
     ]);
-    return NextResponse.redirect(new URL("/platform?status=updated", request.url), 303);
+    return NextResponse.redirect(new URL("/platform?status=updated", appUrl(request)), 303);
   } catch {
-    return NextResponse.redirect(new URL("/platform?error=status", request.url), 303);
+    return NextResponse.redirect(new URL("/platform?error=status", appUrl(request)), 303);
   }
 }
 

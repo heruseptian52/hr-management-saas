@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -20,16 +21,16 @@ export async function POST(request: NextRequest) {
   try {
     const tenant = await requirePermission("company", "edit");
     const parsed = schema.safeParse(Object.fromEntries(await request.formData()));
-    if (!parsed.success) return NextResponse.redirect(new URL("/settings/company?error=validation", request.url), 303);
+    if (!parsed.success) return NextResponse.redirect(new URL("/settings/company?error=validation", appUrl(request)), 303);
     const previous = await db.company.findUniqueOrThrow({ where: { id: tenant.companyId } });
     const data = { ...parsed.data, email: parsed.data.email || null, phone: parsed.data.phone || null, address: parsed.data.address || null };
     await db.$transaction([
       db.company.update({ where: { id: tenant.companyId }, data }),
       db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "UPDATE", module: "company", entityType: "Company", entityId: tenant.companyId, previousValue: previous, newValue: data, userAgent: request.headers.get("user-agent") } }),
     ]);
-    return NextResponse.redirect(new URL("/settings/company?saved=1", request.url), 303);
+    return NextResponse.redirect(new URL("/settings/company?saved=1", appUrl(request)), 303);
   } catch {
-    return NextResponse.redirect(new URL("/dashboard", request.url), 303);
+    return NextResponse.redirect(new URL("/dashboard", appUrl(request)), 303);
   }
 }
 

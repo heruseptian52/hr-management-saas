@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -49,8 +50,8 @@ export async function POST(request: NextRequest) {
       return current;
     });
     await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "COPY_PREVIOUS", module: "schedules", entityType: "Schedule", entityId: schedule.id, newValue: { month: parsed.month, assignments: copied.length } } });
-    return NextResponse.redirect(new URL(`/schedules?month=${parsed.month}&branchId=${branchId ?? ""}&departmentId=${departmentId ?? ""}&saved=copy`, request.url), 303);
+    return NextResponse.redirect(new URL(`/schedules?month=${parsed.month}&branchId=${branchId ?? ""}&departmentId=${departmentId ?? ""}&saved=copy`, appUrl(request)), 303);
   } catch {
-    return NextResponse.redirect(new URL(`/schedules?month=${returnMonth}&error=copy`, request.url), 303);
+    return NextResponse.redirect(new URL(`/schedules?month=${returnMonth}&error=copy`, appUrl(request)), 303);
   }
 }

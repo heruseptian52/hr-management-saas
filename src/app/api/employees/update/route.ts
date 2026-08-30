@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
   try {
     const tenant = await requirePermission("employees", "edit");
     const parsed = schema.safeParse(Object.fromEntries(await request.formData()));
-    if (!parsed.success) return NextResponse.redirect(new URL("/employees?error=validation", request.url), 303);
+    if (!parsed.success) return NextResponse.redirect(new URL("/employees?error=validation", appUrl(request)), 303);
     employeeId = parsed.data.employeeId;
     const previous = await db.employee.findFirstOrThrow({ where: { id: employeeId, companyId: tenant.companyId, deletedAt: null } });
     const [branchCount, departmentCount, positionCount] = await Promise.all([
@@ -29,9 +30,9 @@ export async function POST(request: NextRequest) {
       db.employee.update({ where: { id: previous.id }, data }),
       db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "UPDATE", module: "employees", entityType: "Employee", entityId: previous.id, previousValue: { fullName: previous.fullName, email: previous.email, phone: previous.phone, employmentType: previous.employmentType, employmentStatus: previous.employmentStatus, monthlyDaysOff: previous.monthlyDaysOff, branchId: previous.branchId, departmentId: previous.departmentId, positionId: previous.positionId }, newValue: data } }),
     ]);
-    return NextResponse.redirect(new URL(`/employees/${previous.id}?saved=1`, request.url), 303);
+    return NextResponse.redirect(new URL(`/employees/${previous.id}?saved=1`, appUrl(request)), 303);
   } catch {
-    return NextResponse.redirect(new URL(employeeId ? `/employees/${employeeId}?error=1` : "/employees?error=validation", request.url), 303);
+    return NextResponse.redirect(new URL(employeeId ? `/employees/${employeeId}?error=1` : "/employees?error=validation", appUrl(request)), 303);
   }
 }
 

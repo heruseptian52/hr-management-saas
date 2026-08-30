@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
       if (existing) throw new Error("PENDING_EXISTS");
       const swap = await db.scheduleSwapRequest.create({ data: { companyId: tenant.companyId, scheduleId: parsed.scheduleId, requesterUserId: tenant.session.userId, fromAssignmentId: parsed.fromAssignmentId, toAssignmentId: parsed.toAssignmentId, reason: parsed.reason || null } });
       await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "REQUEST_SWAP", module: "schedules", entityType: "ScheduleSwapRequest", entityId: swap.id, newValue: { fromAssignmentId: parsed.fromAssignmentId, toAssignmentId: parsed.toAssignmentId } } });
-      return NextResponse.redirect(new URL(`/schedules?month=${month}&saved=swap_requested`, request.url), 303);
+      return NextResponse.redirect(new URL(`/schedules?month=${month}&saved=swap_requested`, appUrl(request)), 303);
     }
     const tenant = await requirePermission("schedules", "approve"), parsed = reviewSchema.parse(form); month = parsed.returnMonth;
     const swap = await db.scheduleSwapRequest.findFirstOrThrow({ where: { id: parsed.requestId, companyId: tenant.companyId, status: "PENDING" } });
@@ -41,6 +42,6 @@ export async function POST(request: NextRequest) {
         db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "APPROVE_SWAP", module: "schedules", entityType: "ScheduleSwapRequest", entityId: swap.id, newValue: { fromAssignmentId: from.id, toAssignmentId: to.id } } }),
       ]);
     }
-    return NextResponse.redirect(new URL(`/schedules?month=${month}&saved=swap_reviewed`, request.url), 303);
-  } catch { return NextResponse.redirect(new URL(`/schedules?month=${month}&error=swap`, request.url), 303); }
+    return NextResponse.redirect(new URL(`/schedules?month=${month}&saved=swap_reviewed`, appUrl(request)), 303);
+  } catch { return NextResponse.redirect(new URL(`/schedules?month=${month}&error=swap`, appUrl(request)), 303); }
 }

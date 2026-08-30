@@ -1,3 +1,4 @@
+import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
@@ -15,6 +16,6 @@ export async function POST(request: NextRequest) {
       db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "EDIT", module: "schedules", entityType: "ScheduleAssignment", entityId: assignment.id, previousValue: { shiftId: assignment.shiftId, type: assignment.type }, newValue: { shiftId: parsed.shiftId === "OFF" ? null : parsed.shiftId, type: parsed.shiftId === "OFF" ? "OFF" : "WORK" } } }),
     ]);
     if (request.headers.get("accept")?.includes("application/json")) return NextResponse.json({ ok: true });
-    return NextResponse.redirect(new URL(`/schedules?${parsed.returnQuery ?? `month=${parsed.returnMonth}`}&saved=manual`, request.url), 303);
-  } catch { return request.headers.get("accept")?.includes("application/json") ? NextResponse.json({ error: "Unable to update schedule" }, { status: 400 }) : NextResponse.redirect(new URL("/schedules?error=manual", request.url), 303); }
+    return NextResponse.redirect(new URL(`/schedules?${parsed.returnQuery ?? `month=${parsed.returnMonth}`}&saved=manual`, appUrl(request)), 303);
+  } catch { return request.headers.get("accept")?.includes("application/json") ? NextResponse.json({ error: "Unable to update schedule" }, { status: 400 }) : NextResponse.redirect(new URL("/schedules?error=manual", appUrl(request)), 303); }
 }

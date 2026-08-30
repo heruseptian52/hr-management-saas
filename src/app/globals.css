@@ -73,6 +73,7 @@ p { color:var(--muted); line-height:1.7; }
 .company-actions button { color:white; background:var(--primary); border-color:var(--primary); }
 .company-actions .client-account-form { width:100%; display:grid; grid-template-columns:repeat(4,minmax(150px,1fr)); gap:8px; }
 .company-actions .client-account-form input { min-width:0; padding:9px; border:1px solid #cbd5e1; border-radius:8px; }
+.company-actions .company-delete-form .danger-button { background:#fff1f2; color:#be123c; border-color:#fecdd3; }
 .create-company { margin-top:28px; border-top:1px solid #e2e8f0; padding-top:22px; }
 .create-company>div { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
 .create-company label { font-weight:800; font-size:14px; }

@@ -1,11 +1,8 @@
+import { appUrl } from "@/lib/app-url";
 import { createSessionToken, sessionCookie } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/platform";
 import { NextRequest, NextResponse } from "next/server";
-
-function appUrl(request: NextRequest) {
-  return process.env.APP_URL ?? request.nextUrl.origin;
-}
 
 export async function POST(request: NextRequest) {
   let session;
