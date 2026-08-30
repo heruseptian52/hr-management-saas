@@ -144,6 +144,8 @@ p { color:var(--muted); line-height:1.7; }
 .schedule-status a,.schedule-status button { padding:9px 12px; border:0; border-radius:8px; background:#eff6ff; color:#1d4ed8; text-decoration:none; font-weight:800; }
 .schedule-status form { margin-left:auto; }
 .schedule-status form button { background:var(--primary); color:white; }
+.export-actions { display:flex; flex-wrap:wrap; gap:6px; }
+.schedule-status .export-actions a,.schedule-status .export-actions button { padding:7px 9px; border:0; border-radius:7px; background:#eff6ff; color:#1d4ed8; font:inherit; font-size:12px; font-weight:800; cursor:pointer; text-decoration:none; }
 .schedule-table { overflow:auto; border:1px solid #e2e8f0; border-radius:12px; }
 .schedule-row { min-width:1250px; display:grid; grid-template-columns:180px repeat(31,minmax(34px,1fr)); border-bottom:1px solid #e2e8f0; align-items:center; }
 .schedule-row:last-child { border-bottom:0; }
