@@ -50,23 +50,41 @@ enum AssignmentType {
   OFF
 }
 
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  EARLY_LEAVE
+  ABSENT
+  LEAVE
+  SICK
+  PERMISSION
+  HOLIDAY
+  OVERTIME
+}
+
+enum AttendanceMethod {
+  GPS
+  QR
+  MANUAL
+}
+
 model Company {
-  id              String   @id @default(cuid())
-  code            String   @unique
+  id              String               @id @default(cuid())
+  code            String               @unique
   name            String
   logoUrl         String?
-  primaryColor    String   @default("#2563EB")
-  secondaryColor  String   @default("#0F172A")
+  primaryColor    String               @default("#2563EB")
+  secondaryColor  String               @default("#0F172A")
   address         String?
   email           String?
   phone           String?
-  timezone        String   @default("Asia/Makassar")
-  currency        String   @default("IDR")
-  defaultLanguage String   @default("id")
-  dateFormat      String   @default("DD/MM/YYYY")
-  status          CompanyStatus @default(ACTIVE)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  timezone        String               @default("Asia/Makassar")
+  currency        String               @default("IDR")
+  defaultLanguage String               @default("id")
+  dateFormat      String               @default("DD/MM/YYYY")
+  status          CompanyStatus        @default(ACTIVE)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
   deletedAt       DateTime?
   memberships     Membership[]
   roles           Role[]
@@ -78,36 +96,37 @@ model Company {
   shifts          Shift[]
   schedules       Schedule[]
   assignments     ScheduleAssignment[]
+  attendances     Attendance[]
 
   @@index([status, deletedAt])
 }
 
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
+  id           String         @id @default(cuid())
+  email        String         @unique
   passwordHash String
   fullName     String
-  platformRole PlatformRole @default(COMPANY_USER)
-  isActive     Boolean      @default(true)
-  locale       String       @default("id")
+  platformRole PlatformRole   @default(COMPANY_USER)
+  isActive     Boolean        @default(true)
+  locale       String         @default("id")
   lastLoginAt  DateTime?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
   deletedAt    DateTime?
   memberships  Membership[]
   loginHistory LoginHistory[]
-  auditLogs    AuditLog[]   @relation("AuditActor")
+  auditLogs    AuditLog[]     @relation("AuditActor")
 }
 
 model Role {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
   name        String
-  isSystem    Boolean  @default(false)
+  isSystem    Boolean      @default(false)
   permissions Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?
   memberships Membership[]
 
@@ -132,34 +151,35 @@ model Membership {
 }
 
 model Branch {
-  id        String   @id @default(cuid())
-  companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  code      String
-  name      String
-  address   String?
-  latitude  Decimal? @db.Decimal(10, 7)
-  longitude Decimal? @db.Decimal(10, 7)
-  radiusM   Int      @default(100)
-  timezone  String   @default("Asia/Makassar")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-  employees Employee[]
-  shifts    Shift[]
+  id          String       @id @default(cuid())
+  companyId   String
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  code        String
+  name        String
+  address     String?
+  latitude    Decimal?     @db.Decimal(10, 7)
+  longitude   Decimal?     @db.Decimal(10, 7)
+  radiusM     Int          @default(100)
+  timezone    String       @default("Asia/Makassar")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  employees   Employee[]
+  shifts      Shift[]
+  attendances Attendance[]
 
   @@unique([companyId, code])
   @@index([companyId, deletedAt])
 }
 
 model Department {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
   code      String
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   deletedAt DateTime?
   employees Employee[]
   shifts    Shift[]
@@ -169,13 +189,13 @@ model Department {
 }
 
 model Position {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
   code      String
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   deletedAt DateTime?
   employees Employee[]
 
@@ -184,52 +204,53 @@ model Position {
 }
 
 model Employee {
-  id                String         @id @default(cuid())
-  companyId         String
-  company           Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  employeeNumber    String
-  fullName          String
-  email             String?
-  phone             String?
-  address           String?
-  birthDate         DateTime?
-  joinDate          DateTime
-  branchId          String?
-  branch            Branch?        @relation(fields: [branchId], references: [id], onDelete: Restrict)
-  departmentId      String?
-  department        Department?    @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  positionId        String?
-  position          Position?      @relation(fields: [positionId], references: [id], onDelete: Restrict)
-  employmentType    EmploymentType
-  employmentStatus  EmployeeStatus @default(ACTIVE)
-  monthlyDaysOff    Int            @default(4)
-  baseSalary        Decimal?       @db.Decimal(18, 2)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  deletedAt         DateTime?
-  assignments       ScheduleAssignment[]
+  id               String               @id @default(cuid())
+  companyId        String
+  company          Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  employeeNumber   String
+  fullName         String
+  email            String?
+  phone            String?
+  address          String?
+  birthDate        DateTime?
+  joinDate         DateTime
+  branchId         String?
+  branch           Branch?              @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  departmentId     String?
+  department       Department?          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  positionId       String?
+  position         Position?            @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  employmentType   EmploymentType
+  employmentStatus EmployeeStatus       @default(ACTIVE)
+  monthlyDaysOff   Int                  @default(4)
+  baseSalary       Decimal?             @db.Decimal(18, 2)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  deletedAt        DateTime?
+  assignments      ScheduleAssignment[]
+  attendances      Attendance[]
 
   @@unique([companyId, employeeNumber])
   @@index([companyId, branchId, departmentId, deletedAt])
 }
 
 model Shift {
-  id               String   @id @default(cuid())
+  id               String               @id @default(cuid())
   companyId        String
-  company          Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company          Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
   code             String
   name             String
   startTime        String
   endTime          String
-  breakMinutes     Int      @default(60)
-  lateToleranceMin Int      @default(0)
-  color            String   @default("#2563EB")
+  breakMinutes     Int                  @default(60)
+  lateToleranceMin Int                  @default(0)
+  color            String               @default("#2563EB")
   branchId         String?
-  branch           Branch?  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  branch           Branch?              @relation(fields: [branchId], references: [id], onDelete: Restrict)
   departmentId     String?
-  department       Department? @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  department       Department?          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
   deletedAt        DateTime?
   assignments      ScheduleAssignment[]
 
@@ -238,16 +259,16 @@ model Shift {
 }
 
 model Schedule {
-  id           String         @id @default(cuid())
+  id           String               @id @default(cuid())
   companyId    String
-  company      Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company      Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
   month        DateTime
   name         String
-  status       ScheduleStatus @default(DRAFT)
+  status       ScheduleStatus       @default(DRAFT)
   branchId     String?
   departmentId String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
   publishedAt  DateTime?
   assignments  ScheduleAssignment[]
 
@@ -273,6 +294,34 @@ model ScheduleAssignment {
 
   @@unique([scheduleId, employeeId, date])
   @@index([companyId, date, employeeId])
+}
+
+model Attendance {
+  id              String           @id @default(cuid())
+  companyId       String
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  employeeId      String
+  employee        Employee         @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  branchId        String?
+  branch          Branch?          @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  workDate        DateTime
+  checkInAt       DateTime?
+  checkOutAt      DateTime?
+  status          AttendanceStatus @default(PRESENT)
+  method          AttendanceMethod @default(MANUAL)
+  latitude        Decimal?         @db.Decimal(10, 7)
+  longitude       Decimal?         @db.Decimal(10, 7)
+  distanceM       Int?
+  workMinutes     Int              @default(0)
+  lateMinutes     Int              @default(0)
+  overtimeMinutes Int              @default(0)
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([companyId, employeeId, workDate])
+  @@index([companyId, workDate, status])
+  @@index([companyId, branchId, workDate])
 }
 
 model LoginHistory {

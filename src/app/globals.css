@@ -120,6 +120,7 @@ p { color:var(--muted); line-height:1.7; }
 .search-form { display:flex; gap:8px; margin-top:22px; }
 .search-form button { min-width:90px; }
 .data-row.employee { grid-template-columns:.8fr 1.5fr 1fr 1fr 1fr .8fr; }
+.data-row.attendance { grid-template-columns:1.5fr 1fr .8fr .8fr .8fr 1fr; }
 .data-row.employee small { display:block; color:var(--muted); margin-top:3px; }
 .employee-link { color:inherit; text-decoration:none; }
 .employee-link:hover { background:#f8fafc; }
