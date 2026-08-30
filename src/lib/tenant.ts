@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { readSession } from "@/lib/auth";
+import { ownerPermissions } from "@/lib/permissions";
 
 export class AccessDeniedError extends Error {}
 
@@ -27,7 +28,7 @@ export async function requireTenant() {
         createdAt: company.createdAt,
         updatedAt: company.updatedAt,
         company,
-        role,
+        role: { ...role, permissions: ownerPermissions },
       },
     };
   }
@@ -43,6 +44,7 @@ export async function requireTenant() {
   });
 
   if (!membership) throw new AccessDeniedError("Active company membership not found");
+  if (membership.role.isSystem && membership.role.name === "Owner") membership.role.permissions = ownerPermissions;
   return { session, membership, companyId: membership.companyId };
 }
 
