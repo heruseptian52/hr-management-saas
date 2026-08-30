@@ -244,6 +244,8 @@ model Shift {
   endTime          String
   breakMinutes     Int                  @default(60)
   lateToleranceMin Int                  @default(0)
+  minStaff         Int                  @default(1)
+  maxStaff         Int?
   color            String               @default("#2563EB")
   branchId         String?
   branch           Branch?              @relation(fields: [branchId], references: [id], onDelete: Restrict)

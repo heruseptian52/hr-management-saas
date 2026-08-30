@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-const schema = z.object({ code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{2,20}$/), name: z.string().trim().min(2).max(60), startTime: z.string().regex(/^\d{2}:\d{2}$/), endTime: z.string().regex(/^\d{2}:\d{2}$/), breakMinutes: z.coerce.number().int().min(0).max(480), lateToleranceMin: z.coerce.number().int().min(0).max(180), color: z.string().regex(/^#[0-9A-Fa-f]{6}$/) });
+const schema = z.object({ code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_-]{2,20}$/), name: z.string().trim().min(2).max(60), startTime: z.string().regex(/^\d{2}:\d{2}$/), endTime: z.string().regex(/^\d{2}:\d{2}$/), breakMinutes: z.coerce.number().int().min(0).max(480), lateToleranceMin: z.coerce.number().int().min(0).max(180), minStaff: z.coerce.number().int().min(0).max(10000), maxStaff: z.preprocess(value => value === "" ? null : value, z.coerce.number().int().min(1).max(10000).nullable()), color: z.string().regex(/^#[0-9A-Fa-f]{6}$/) }).refine(data => data.maxStaff === null || data.maxStaff >= data.minStaff, { message: "Maximum staff must be greater than minimum staff" });
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,4 +15,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(new URL("/schedules?saved=shift", request.url), 303);
   } catch { return NextResponse.redirect(new URL("/schedules?error=shift_duplicate", request.url), 303); }
 }
-
