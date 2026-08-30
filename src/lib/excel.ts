@@ -9,9 +9,9 @@ export type EmployeeImportField = typeof employeeFields[number][0];
 
 const aliases: Record<EmployeeImportField, string[]> = {
   fullName: ["nama", "nama karyawan", "nama lengkap", "name"], employeeNumber: ["nik", "employee id", "kode karyawan", "nik internal", "kode karyawan / nik internal"],
-  position: ["jabatan", "posisi", "position"], department: ["divisi", "departemen", "dept", "department"], phone: ["hp", "nomor hp", "telepon", "phone"],
+  position: ["jabatan", "posisi", "position"], department: ["divisi", "departemen", "divisi / departemen", "dept", "department"], phone: ["hp", "nomor hp", "telepon", "phone"],
   email: ["email", "e-mail"], joinDate: ["tanggal masuk", "tgl masuk", "join date"], employmentType: ["jenis kontrak", "jenis kerja", "kontrak"],
-  shift: ["shift"], branch: ["cabang", "lokasi", "branch"], status: ["status", "status karyawan"],
+  shift: ["shift"], branch: ["cabang", "lokasi", "cabang / lokasi", "branch"], status: ["status", "status karyawan"],
 };
 const normalized = (value: unknown) => String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 
