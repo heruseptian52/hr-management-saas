@@ -154,6 +154,15 @@ p { color:var(--muted); line-height:1.7; }
 .schedule-row form { display:flex; padding:2px; }
 .schedule-row form select { width:100%; min-width:28px; border:0; background:#eff6ff; font-size:9px; padding:5px 1px; }
 .schedule-row form button { width:18px; border:0; padding:0; background:#dbeafe; color:#1d4ed8; cursor:pointer; font-weight:900; }
+.drag-palette { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:12px 0; padding:10px 12px; background:#f8fafc; border:1px dashed #94a3b8; border-radius:10px; font-size:12px; }
+.drag-palette button { padding:7px 10px; border:2px solid; border-radius:7px; background:white; font-weight:900; cursor:grab; }
+.drag-palette .off-chip { border-color:#94a3b8; color:#475569; }
+.drag-palette span { color:#15803d; font-weight:800; }
+.schedule-drop-cell { height:100%; border-top:4px solid; padding:2px; transition:background .15s,transform .15s; }
+.schedule-drop-cell:hover { background:#dbeafe; transform:translateY(-1px); }
+.schedule-drop-cell.saving { opacity:.45; }
+.schedule-drop-cell select { width:100%; height:100%; min-height:32px; border:0; background:transparent; font-size:10px; font-weight:800; cursor:pointer; }
+.locked-cell { display:grid; place-items:center; min-height:42px; border-top:4px solid; font-size:11px; font-weight:900; }
 .schedule-create-actions { display:flex; gap:8px; }
 .schedule-create-actions form { display:block; }
 .schedule-tools .secondary-button { background:#e2e8f0; color:#0f172a; }
