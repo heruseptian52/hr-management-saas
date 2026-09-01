@@ -1,17 +1,22 @@
 import * as XLSX from "xlsx";
 
 export const employeeFields = [
-  ["fullName", "Nama Karyawan"], ["employeeNumber", "Kode Karyawan / NIK Internal"], ["position", "Jabatan"],
-  ["department", "Divisi / Departemen"], ["phone", "Nomor HP"], ["email", "Email"], ["joinDate", "Tanggal Masuk"],
-  ["employmentType", "Jenis Kontrak"], ["shift", "Shift"], ["branch", "Cabang / Lokasi"], ["status", "Status Karyawan"],
+  ["fullName", "Nama Karyawan"], ["employeeNumber", "ID Karyawan"], ["nationalId", "NIK / No KTP"],
+  ["joinDate", "Tanggal Masuk"], ["contractEndDate", "Berakhir Kontrak"], ["stopDate", "Tanggal Berhenti"],
+  ["employeeStatusLabel", "Status Keaktifan"], ["position", "Jabatan / Posisi"], ["department", "Divisi / Departemen"],
+  ["placeOfBirth", "Tempat Lahir"], ["birthDate", "Tanggal Lahir"], ["address", "Alamat"],
+  ["maritalStatus", "Status Pernikahan"], ["religion", "Agama"], ["phone", "Nomor Telepon"],
+  ["email", "Email"], ["employmentType", "Jenis Kontrak"], ["shift", "Shift"], ["branch", "Cabang / Lokasi"],
 ] as const;
 export type EmployeeImportField = typeof employeeFields[number][0];
 
 const aliases: Record<EmployeeImportField, string[]> = {
-  fullName: ["nama", "nama karyawan", "nama lengkap", "name"], employeeNumber: ["nik", "employee id", "kode karyawan", "nik internal", "kode karyawan / nik internal"],
-  position: ["jabatan", "posisi", "position"], department: ["divisi", "departemen", "divisi / departemen", "dept", "department"], phone: ["hp", "nomor hp", "telepon", "phone"],
-  email: ["email", "e-mail"], joinDate: ["tanggal masuk", "tgl masuk", "join date"], employmentType: ["jenis kontrak", "jenis kerja", "kontrak"],
-  shift: ["shift"], branch: ["cabang", "lokasi", "cabang / lokasi", "branch"], status: ["status", "status karyawan"],
+  fullName: ["nama", "nama karyawan", "nama lengkap", "name"], employeeNumber: ["employee id", "id karyawan", "kode karyawan", "nik internal", "kode karyawan / nik internal"], nationalId: ["no ktp", "nomor ktp", "nik", "nik / no ktp"],
+  joinDate: ["tanggal masuk", "tgl masuk", "join date"], contractEndDate: ["periode kontrak", "berakhir kontrak", "tanggal berakhir kontrak", "contract end date"], stopDate: ["tanggal berhenti", "resign date", "tanggal resign"],
+  employeeStatusLabel: ["status keaktifan", "status karyawan", "status aktif"],
+  position: ["jabatan", "posisi", "jabatan / posisi", "position"], department: ["divisi", "departemen", "divisi / departemen", "dept", "department"], phone: ["hp", "nomor hp", "no telfon", "no telepon", "nomor telepon", "telepon", "phone"],
+  placeOfBirth: ["tempat lahir"], birthDate: ["tempat, tanggal lahir", "tanggal lahir", "tgl lahir", "birth date"], address: ["alamat", "address"], maritalStatus: ["status", "status pernikahan"], religion: ["agama", "religion"],
+  email: ["email", "e-mail"], employmentType: ["jenis kontrak", "jenis kerja", "kontrak"], shift: ["shift"], branch: ["cabang", "lokasi", "cabang / lokasi", "branch"],
 };
 const normalized = (value: unknown) => String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 

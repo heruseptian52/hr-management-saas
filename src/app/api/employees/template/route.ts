@@ -7,9 +7,10 @@ export async function GET() {
     await requirePermission("employees", "view");
     const workbook = XLSX.utils.book_new();
     const headers = employeeFields.map(([, label]) => label);
-    const data = [headers, ["Budi Santoso", "EMP001", "Kasir", "Operasional", "08123456789", "budi@email.com", "2026-08-01", "Tetap", "Pagi", "Kantor Pusat", "Aktif"], ["Siti Aminah", "EMP002", "Supervisor", "Operasional", "08123456780", "", "2026-08-05", "Kontrak", "Siang", "Kantor Pusat", "Aktif"]];
-    XLSX.utils.book_append_sheet(workbook, styledSheet(data, [24, 24, 20, 22, 18, 26, 16, 18, 14, 20, 18]), "DATA");
-    const help = [["Kolom", "Wajib", "Format / Petunjuk", "Contoh"], ...employeeFields.map(([field, label]) => [label, field === "fullName" ? "YA" : "Tidak", field === "joinDate" ? "YYYY-MM-DD" : "Teks", data[1][headers.indexOf(label)]])];
+    const sample: Record<string, string> = { fullName: "Contoh Karyawan 001", employeeNumber: "CONTOH001", nationalId: "0000000000000000", joinDate: "17 JANUARI 2025", contractEndDate: "31 DESEMBER 2026", employeeStatusLabel: "Aktif", position: "Kasir", department: "Operasional", placeOfBirth: "Kota Contoh", birthDate: "21 FEBRUARI 2000", address: "Alamat contoh", maritalStatus: "Lajang", religion: "Islam", phone: "080000000000", email: "karyawan001@example.invalid", employmentType: "Kontrak", shift: "Pagi", branch: "Kantor Pusat" };
+    const data = [headers, employeeFields.map(([field]) => sample[field] ?? ""), employeeFields.map(([field]) => field === "fullName" ? "Contoh Karyawan 002" : field === "position" ? "Supervisor" : "")];
+    XLSX.utils.book_append_sheet(workbook, styledSheet(data, employeeFields.map(([, label]) => Math.max(16, Math.min(30, label.length + 5)))), "DATA");
+    const help = [["Kolom", "Wajib", "Format / Petunjuk", "Contoh"], ...employeeFields.map(([field, label]) => [label, field === "fullName" ? "YA" : "Tidak", ["joinDate", "contractEndDate", "stopDate", "birthDate"].includes(field) ? "Tanggal Excel, DD-MM-YYYY, atau nama bulan Indonesia" : field === "nationalId" ? "Teks; NIK normal 16 digit" : "Teks; boleh kosong", sample[field] ?? ""] )];
     XLSX.utils.book_append_sheet(workbook, styledSheet(help, [28, 12, 35, 26]), "PETUNJUK");
     return workbookResponse(workbook, "template-karyawan-panboy-hr.xlsx");
   } catch { return new Response("Forbidden", { status: 403 }); }

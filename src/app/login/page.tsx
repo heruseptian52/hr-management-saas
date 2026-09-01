@@ -14,7 +14,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   const error = (await searchParams).error;
   return <main className="auth-page">
     <section className="auth-brand">
-      <span className="brand-mark">HR</span>
+      <span className="brand-mark"><img src="https://panboycommunity.my.id/panboy-menu-logo.png" alt="Logo Panboy" /></span>
       <div><strong>PANBOY HR</strong><small>Smart HR & Employee Management</small></div>
       <h1>Kelola tim dengan lebih teratur.</h1>
       <p>Jadwal, karyawan, absensi, dan laporan perusahaan dalam satu platform yang aman.</p>

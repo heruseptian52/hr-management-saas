@@ -104,6 +104,8 @@ model Company {
   schedules       Schedule[]
   assignments     ScheduleAssignment[]
   attendances     Attendance[]
+  masterData      MasterData[]
+  importBatches   ImportBatch[]
 
   @@index([status, deletedAt])
 }
@@ -218,16 +220,34 @@ model Employee {
   fullName         String
   email            String?
   phone            String?
+  additionalPhone  String?
   address          String?
+  placeOfBirth     String?
   birthDate        DateTime?
-  joinDate         DateTime
+  gender           String?
+  religion         String?
+  maritalStatus    String?
+  nationalId       String?
+  familyCardNumber String?
+  taxNumber        String?
+  joinDate         DateTime?
+  contractStartDate DateTime?
+  contractEndDate  DateTime?
+  stopDate         DateTime?
+  terminationReason String?
+  employeeStatusLabel String?
+  bankName         String?
+  bankAccountNumber String?
+  bankAccountHolder String?
+  bpjsHealth       String?
+  bpjsEmployment   String?
   branchId         String?
   branch           Branch?              @relation(fields: [branchId], references: [id], onDelete: Restrict)
   departmentId     String?
   department       Department?          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
   positionId       String?
   position         Position?            @relation(fields: [positionId], references: [id], onDelete: Restrict)
-  employmentType   EmploymentType
+  employmentType   EmploymentType?
   employmentStatus EmployeeStatus       @default(ACTIVE)
   monthlyDaysOff   Int                  @default(4)
   baseSalary       Decimal?             @db.Decimal(18, 2)
@@ -236,9 +256,50 @@ model Employee {
   deletedAt        DateTime?
   assignments      ScheduleAssignment[]
   attendances      Attendance[]
+  importBatchId    String?
+  importBatch      ImportBatch?         @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
 
   @@unique([companyId, employeeNumber])
   @@index([companyId, branchId, departmentId, deletedAt])
+}
+
+model MasterData {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  category    String
+  code        String
+  name        String
+  color       String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([companyId, category, code])
+  @@index([companyId, category, isActive, deletedAt])
+}
+
+model ImportBatch {
+  id          String    @id @default(cuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  actorUserId String?
+  filename    String
+  dataType    String    @default("EMPLOYEE")
+  totalRows   Int
+  createdRows Int       @default(0)
+  updatedRows Int       @default(0)
+  skippedRows Int       @default(0)
+  warningRows Int       @default(0)
+  errorRows   Int       @default(0)
+  errorData   Json?
+  createdAt   DateTime  @default(now())
+  rolledBackAt DateTime?
+  employees   Employee[]
+
+  @@index([companyId, dataType, createdAt])
 }
 
 model Shift {
