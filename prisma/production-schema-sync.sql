@@ -69,3 +69,27 @@ DO $$ BEGIN
     ALTER TABLE "Employee" ADD CONSTRAINT "Employee_importBatchId_fkey" FOREIGN KEY ("importBatchId") REFERENCES "ImportBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
   END IF;
 END $$;
+
+
+-- Department scheduling rules (additive and tenant isolated).
+CREATE TABLE IF NOT EXISTS "DepartmentScheduleRule" (
+  "id" TEXT NOT NULL,
+  "companyId" TEXT NOT NULL,
+  "departmentId" TEXT NOT NULL,
+  "allowedShiftIds" JSONB NOT NULL DEFAULT '[]',
+  "forbiddenOffWeekdays" JSONB NOT NULL DEFAULT '[]',
+  "rotation" TEXT NOT NULL DEFAULT 'DAILY',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "DepartmentScheduleRule_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "DepartmentScheduleRule_departmentId_key" ON "DepartmentScheduleRule"("departmentId");
+CREATE INDEX IF NOT EXISTS "DepartmentScheduleRule_companyId_idx" ON "DepartmentScheduleRule"("companyId");
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'DepartmentScheduleRule_companyId_fkey') THEN
+    ALTER TABLE "DepartmentScheduleRule" ADD CONSTRAINT "DepartmentScheduleRule_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'DepartmentScheduleRule_departmentId_fkey') THEN
+    ALTER TABLE "DepartmentScheduleRule" ADD CONSTRAINT "DepartmentScheduleRule_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
