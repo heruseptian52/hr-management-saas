@@ -19,21 +19,20 @@ export async function POST(request: NextRequest) {
     if (!employee) return NextResponse.redirect(new URL("/employees?error=not_found", appUrl(request)), 303);
 
     const now = new Date();
-    await db.$transaction(async (tx) => {
-      await tx.employee.update({ where: { id: employee.id }, data: { deletedAt: now } });
-      await tx.auditLog.create({ data: {
-        companyId: tenant.companyId,
-        actorUserId: tenant.session.userId,
-        action: "SOFT_DELETE",
-        module: "employees",
-        entityType: "Employee",
-        entityId: employee.id,
-        previousValue: { employeeNumber: employee.employeeNumber, fullName: employee.fullName },
-        newValue: { deletedAt: now.toISOString() }
-      } });
-    });
+    await db.employee.update({ where: { id: employee.id }, data: { deletedAt: now } });
+    await db.auditLog.create({ data: {
+      companyId: tenant.companyId,
+      actorUserId: tenant.session.userId,
+      action: "SOFT_DELETE",
+      module: "employees",
+      entityType: "Employee",
+      entityId: employee.id,
+      previousValue: { employeeNumber: employee.employeeNumber, fullName: employee.fullName },
+      newValue: { deletedAt: now.toISOString() }
+    } }).catch((auditError) => console.error("EMPLOYEE_DELETE_AUDIT", auditError));
     return NextResponse.redirect(new URL("/employees?deleted=1", appUrl(request)), 303);
-  } catch {
+  } catch (error) {
+    console.error("EMPLOYEE_DELETE", error);
     return NextResponse.redirect(new URL("/employees?error=delete_failed", appUrl(request)), 303);
   }
 }
