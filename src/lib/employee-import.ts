@@ -27,7 +27,7 @@ export function parseEmployeeDate(value: unknown): { date: Date | null; warning?
   const datePortion = original.includes(",") ? original.split(",").at(-1)!.trim() : original;
   const cleaned = datePortion.toLocaleLowerCase("id-ID").replace(/,/g, " ").replace(/(\d)([a-z])/gi, "$1 $2").replace(/([a-z])(\d)/gi, "$1 $2").replace(/\s*([\/-])\s*/g, "$1").replace(/\s+/g, " ").trim();
   const named = cleaned.match(/^(\d{1,2})[\s\-/]+([a-z]+)[\s\-/]+(\d{4})$/i);
-  const numeric = cleaned.match(/^(\d{1,2})[\-/](\d{1,2})[\-/](\d{4})$/);
+  const numeric = cleaned.match(/^(\d{1,2})[\s\-/]+(\d{1,2})[\s\-/]+(\d{4})$/);
   let day: number, month: number, year: number;
   if (named) { day = Number(named[1]); month = monthMap[named[2]]; year = Number(named[3]); }
   else if (numeric) { day = Number(numeric[1]); month = Number(numeric[2]) - 1; year = Number(numeric[3]); }
@@ -37,9 +37,10 @@ export function parseEmployeeDate(value: unknown): { date: Date | null; warning?
     return { date: null, original, warning: `Tanggal tidak valid: ${original}` };
   }
   if (!Number.isInteger(month)) return { date: null, original, warning: `Tanggal tidak valid: ${original}` };
-  const date = new Date(Date.UTC(year, month, day));
-  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month || date.getUTCDate() !== day) return { date: null, original, warning: `Tanggal tidak valid: ${original}` };
-  return { date, original };
+  if (month < 0 || month > 11 || year < 1900 || year > 2200 || day < 1) return { date: null, original };
+  const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const normalizedDay = Math.min(day, lastDay);
+  return { date: new Date(Date.UTC(year, month, normalizedDay)), original };
 }
 
 export function normalizeNationalId(value: unknown) { return importText(value).replace(/\D/g, ""); }
