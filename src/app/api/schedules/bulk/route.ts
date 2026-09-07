@@ -1,3 +1,4 @@
+import { ensureSchedulingRuleSchema } from "@/lib/scheduling-rule-schema";
 import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
@@ -16,6 +17,7 @@ export async function POST(request: NextRequest) {
   let returnMonth = new Date().toISOString().slice(0, 7);
   try {
     const tenant = await requirePermission("schedules", "edit");
+    await ensureSchedulingRuleSchema();
     const parsed = schema.parse(Object.fromEntries(await request.formData()));
     returnMonth = parsed.returnMonth;
     if (parsed.endDay < parsed.startDay) throw new Error("INVALID_RANGE");
