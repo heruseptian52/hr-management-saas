@@ -24,20 +24,28 @@ export async function POST(request: NextRequest) {
     const start = new Date(Date.UTC(schedule.month.getUTCFullYear(), schedule.month.getUTCMonth(), parsed.startDay));
     const end = new Date(Date.UTC(schedule.month.getUTCFullYear(), schedule.month.getUTCMonth(), parsed.endDay, 23, 59, 59));
     const where = { scheduleId: schedule.id, companyId: tenant.companyId, date: { gte: start, lte: end }, ...(parsed.employeeId === "ALL" ? {} : { employeeId: parsed.employeeId }) };
-    const assignments = await db.scheduleAssignment.findMany({ where, select: { id: true, date: true, employee: { select: { departmentId: true } } } });
+    const assignments = await db.scheduleAssignment.findMany({ where, select: { id: true, date: true, employee: { select: { departmentId: true, positionId: true } } } });
     if (!assignments.length) throw new Error("NO_ASSIGNMENTS");
     const departmentIds = [...new Set(assignments.map(item => item.employee.departmentId).filter((id): id is string => Boolean(id)))];
-    const rules = await db.departmentScheduleRule.findMany({ where: { companyId: tenant.companyId, departmentId: { in: departmentIds } } });
+    const positionIds = [...new Set(assignments.map(item => item.employee.positionId).filter((id): id is string => Boolean(id)))];
+    const [rules, positionRules] = await Promise.all([
+      db.departmentScheduleRule.findMany({ where: { companyId: tenant.companyId, departmentId: { in: departmentIds } } }),
+      db.positionScheduleRule.findMany({ where: { companyId: tenant.companyId, positionId: { in: positionIds } } }),
+    ]);
     const ruleMap = new Map(rules.map(rule => [rule.departmentId, rule]));
+    const positionRuleMap = new Map(positionRules.map(rule => [rule.positionId, rule]));
     for (const assignment of assignments) {
       const departmentId = assignment.employee.departmentId;
       const rule = departmentId ? ruleMap.get(departmentId) : undefined;
+      const positionRule = assignment.employee.positionId ? positionRuleMap.get(assignment.employee.positionId) : undefined;
       if (!shift) {
-        if (rule && numbers(rule.forbiddenOffWeekdays).includes(assignment.date.getUTCDay())) throw new Error("OFF_NOT_ALLOWED");
+        const forbidden = [...numbers(rule?.forbiddenOffWeekdays), ...numbers(positionRule?.forbiddenOffWeekdays)];
+        if (forbidden.includes(assignment.date.getUTCDay())) throw new Error("OFF_NOT_ALLOWED");
       } else {
         if (shift.departmentId && shift.departmentId !== departmentId) throw new Error("SHIFT_NOT_ALLOWED");
-        const allowed = strings(rule?.allowedShiftIds);
-        if (allowed.length && !allowed.includes(shift.id)) throw new Error("SHIFT_NOT_ALLOWED");
+        const departmentAllowed = strings(rule?.allowedShiftIds);
+        const positionAllowed = strings(positionRule?.allowedShiftIds);
+        if ((departmentAllowed.length && !departmentAllowed.includes(shift.id)) || (positionAllowed.length && !positionAllowed.includes(shift.id))) throw new Error("SHIFT_NOT_ALLOWED");
       }
     }
     await db.$transaction([
