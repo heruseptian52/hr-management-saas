@@ -14,16 +14,18 @@ export async function POST(request: NextRequest) {
   try {
     const tenant = await requirePermission("schedules", "create");
     await ensureSchedulingRuleSchema();
-    const parsed = schema.safeParse(Object.fromEntries(await request.formData()));
+    const form = await request.formData();
+    const parsed = schema.safeParse(Object.fromEntries(form));
     if (!parsed.success) throw new Error("INVALID");
     const [year, month] = parsed.data.month.split("-").map(Number);
     const branchId = parsed.data.branchId || null, departmentId = parsed.data.departmentId || null;
     if (branchId && !(await db.branch.count({ where: { id: branchId, companyId: tenant.companyId, deletedAt: null } }))) throw new Error("BRANCH");
     if (departmentId && !(await db.department.count({ where: { id: departmentId, companyId: tenant.companyId, deletedAt: null } }))) throw new Error("DEPARTMENT");
 
+    const selectedEmployeeIds = [...new Set(form.getAll("employeeId").map(String).filter(Boolean))];
     const [rawEmployees, shifts, rules, positionRules] = await Promise.all([
       db.employee.findMany({
-        where: { companyId: tenant.companyId, deletedAt: null, employmentStatus: "ACTIVE", ...(branchId ? { branchId } : {}), ...(departmentId ? { departmentId } : {}) },
+        where: { companyId: tenant.companyId, deletedAt: null, employmentStatus: "ACTIVE", id: { in: selectedEmployeeIds }, ...(branchId ? { branchId } : {}), ...(departmentId ? { departmentId } : {}) },
         select: { id: true, monthlyDaysOff: true, departmentId: true, positionId: true },
       }),
       db.shift.findMany({
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
       db.departmentScheduleRule.findMany({ where: { companyId: tenant.companyId, ...(departmentId ? { departmentId } : {}) } }),
       db.positionScheduleRule.findMany({ where: { companyId: tenant.companyId } }),
     ]);
-    if (!rawEmployees.length) throw new Error("NO_EMPLOYEES");
+    if (!selectedEmployeeIds.length || !rawEmployees.length || rawEmployees.length !== selectedEmployeeIds.length) throw new Error("NO_EMPLOYEES");
     if (!shifts.length) throw new Error("NO_SHIFTS");
     const ruleMap = new Map(rules.map(rule => [rule.departmentId, rule]));
     const positionRuleMap = new Map(positionRules.map(rule => [rule.positionId, rule]));
