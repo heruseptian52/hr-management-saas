@@ -13,7 +13,9 @@ export default async function EmployeesPage({ searchParams }: { searchParams: Pr
     db.employee.findMany({
       where: { companyId: tenant.companyId, deletedAt: null, ...(search ? { OR: [{ fullName: { contains: search, mode: "insensitive" } }, { employeeNumber: { contains: search, mode: "insensitive" } }, { email: { contains: search, mode: "insensitive" } }] } : {}) },
       select: { id: true, employeeNumber: true, fullName: true, email: true, employmentStatus: true, branch: { select: { name: true } }, department: { select: { name: true } }, position: { select: { name: true } } },
-      orderBy: { fullName: "asc" },
+      // Group the list for quick HR setup: department first, then position,
+      // then employee name. This keeps all Pramuniaga/Kasir/etc. together.
+      orderBy: [{ department: { name: "asc" } }, { position: { name: "asc" } }, { fullName: "asc" }],
       take: 100
     }),
     db.branch.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }),
