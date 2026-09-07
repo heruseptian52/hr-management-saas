@@ -25,7 +25,7 @@ export function parseEmployeeDate(value: unknown): { date: Date | null; warning?
     return { date: utc, original };
   }
   const datePortion = original.includes(",") ? original.split(",").at(-1)!.trim() : original;
-  const cleaned = datePortion.toLocaleLowerCase("id-ID").replace(/,/g, " ").replace(/(\d)([a-z])/gi, "$1 $2").replace(/([a-z])(\d)/gi, "$1 $2").replace(/\s+/g, " ").trim();
+  const cleaned = datePortion.toLocaleLowerCase("id-ID").replace(/,/g, " ").replace(/(\d)([a-z])/gi, "$1 $2").replace(/([a-z])(\d)/gi, "$1 $2").replace(/\s*([\/-])\s*/g, "$1").replace(/\s+/g, " ").trim();
   const named = cleaned.match(/^(\d{1,2})[\s\-/]+([a-z]+)[\s\-/]+(\d{4})$/i);
   const numeric = cleaned.match(/^(\d{1,2})[\-/](\d{1,2})[\-/](\d{4})$/);
   let day: number, month: number, year: number;
