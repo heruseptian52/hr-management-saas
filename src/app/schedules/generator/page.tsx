@@ -15,11 +15,12 @@ export default async function GeneratorPage({searchParams}:{searchParams:Promise
   if(!hasPermission(permissions,"schedules","create")) redirect("/schedules");
   await ensureSchedulingRuleSchema();
   const query=await searchParams, month=validMonth(query.month), branchId=query.branchId??"", departmentId=query.departmentId??"";
-  const [positions,shifts,branches,departments]=await Promise.all([
+  const [positions,shifts,branches,departments,employees]=await Promise.all([
     db.position.findMany({where:{companyId:tenant.companyId,deletedAt:null},include:{scheduleRule:true},orderBy:{name:"asc"}}),
     db.shift.findMany({where:{companyId:tenant.companyId,deletedAt:null},orderBy:[{startTime:"asc"},{name:"asc"}]}),
     db.branch.findMany({where:{companyId:tenant.companyId,deletedAt:null},orderBy:{name:"asc"}}),
     db.department.findMany({where:{companyId:tenant.companyId,deletedAt:null},orderBy:{name:"asc"}}),
+    db.employee.findMany({where:{companyId:tenant.companyId,deletedAt:null,employmentStatus:"ACTIVE",...(branchId?{branchId}:{}),...(departmentId?{departmentId}:{})},select:{id:true,fullName:true,employeeNumber:true,positionId:true,position:{select:{name:true}}},orderBy:[{position:{name:"asc"}},{fullName:"asc"}]}),
   ]);
   return <main className="settings-page"><section className="settings-card generator-card">
     <header><div><span className="eyebrow">PANBOY HR</span><h1>Generator Jadwal</h1><p>Atur shift dan hari libur setiap jabatan, lalu buat jadwal dalam satu tempat.</p></div><a href="/schedules">Kembali ke Jadwal</a></header>
@@ -38,7 +39,8 @@ export default async function GeneratorPage({searchParams}:{searchParams:Promise
           <fieldset><legend>Tidak boleh libur</legend><div className="inline-checks day-checks">{DAYS.map(day=><label key={day.value}><input type="checkbox" name={`off__${position.id}`} value={day.value} defaultChecked={blocked.has(day.value)}/><span>{day.label}</span></label>)}</div></fieldset>
         </article>})}{!positions.length&&<div className="empty-state"><p>Belum ada jabatan. Tambahkan jabatan terlebih dahulu.</p></div>}</div>
       </div></section>
-      <section className="generator-step generator-final"><div className="step-number">3</div><div className="step-content"><h2>Buat jadwal</h2><p>Sistem akan memakai jumlah libur karyawan, aturan jabatan, aturan departemen, dan shift yang dipilih.</p><div className="generator-actions"><button name="action" value="save" className="secondary-button">Simpan aturan saja</button><button name="action" value="generate" disabled={!positions.length||!shifts.length}>Simpan & Generate Jadwal</button></div></div></section>
+      <section className="generator-step"><div className="step-number">3</div><div className="step-content"><h2>Pilih karyawan yang masuk jadwal</h2><p className="muted">Karyawan dikelompokkan berdasarkan jabatan. Centang siapa saja; jabatan berbeda boleh dicampur dalam satu jadwal.</p><div className="generator-position-list">{positions.map(position=>{const members=employees.filter(employee=>employee.positionId===position.id);return members.length?<article className="generator-position-row" key={`employees-${position.id}`}><div className="position-name"><small>{members.length} karyawan</small><b>{position.name}</b></div><div className="inline-checks">{members.map(employee=><label key={employee.id}><input type="checkbox" name="employeeId" value={employee.id} defaultChecked/><span>{employee.fullName}</span></label>)}</div></article>:null})}{employees.filter(employee=>!employee.positionId).length>0&&<article className="generator-position-row"><div className="position-name"><b>Tanpa jabatan</b></div><div className="inline-checks">{employees.filter(employee=>!employee.positionId).map(employee=><label key={employee.id}><input type="checkbox" name="employeeId" value={employee.id} defaultChecked/><span>{employee.fullName}</span></label>)}</div></article>}</div></div></section>
+      <section className="generator-step generator-final"><div className="step-number">4</div><div className="step-content"><h2>Buat jadwal</h2><p>Sistem akan memakai karyawan terpilih, jumlah libur, aturan jabatan, aturan departemen, dan shift yang dipilih.</p><div className="generator-actions"><button name="action" value="save" className="secondary-button">Simpan aturan saja</button><button name="action" value="generate" disabled={!employees.length||!positions.length||!shifts.length}>Simpan & Generate Jadwal</button></div></div></section>
     </form>
   </section></main>;
 }
