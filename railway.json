@@ -5,7 +5,7 @@
     "buildCommand": "npm run build"
   },
   "deploy": {
-    "preDeployCommand": "npm run db:push",
+    "preDeployCommand": "npx prisma db execute --file prisma/production-schema-sync.sql --schema prisma/schema.prisma",
     "startCommand": "npm start",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 120,
