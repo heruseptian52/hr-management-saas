@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const schema = z.object({ name: z.string().trim().min(2).max(50), permissions: z.array(z.string()).max(100) });
-const modules = ["company", "roles", "employees", "branches", "departments", "positions", "audit"];
+const modules = ["company", "roles", "employees", "branches", "departments", "positions", "shifts", "schedules", "attendance", "audit"];
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,4 +27,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(new URL("/settings/roles?error=duplicate", appUrl(request)), 303);
   }
 }
-
