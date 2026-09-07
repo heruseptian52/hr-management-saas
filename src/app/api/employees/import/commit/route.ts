@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { importKey, importText, normalizeNationalId, normalizePhones, parseEmployeeDate, phoneDigits, safeCode, tidyEmployeeText } from "@/lib/employee-import";
+import { ensureEmployeeImportSchema } from "@/lib/employee-import-schema";
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -14,6 +15,7 @@ const internalStatus = (label: string): "ACTIVE" | "INACTIVE" | "RESIGNED" | "TE
 export async function POST(request: NextRequest) {
   try {
     const tenant = await requirePermission("employees", "create"), parsed = schema.parse(await request.json());
+    await ensureEmployeeImportSchema();
     const mapped = (row: Record<string, unknown>, field: string) => parsed.mapping[field] ? row[parsed.mapping[field]] : "";
     const [existing, positions, departments, branches, masters] = await Promise.all([
       db.employee.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }), db.position.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }), db.department.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }), db.branch.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }), db.masterData.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }),
