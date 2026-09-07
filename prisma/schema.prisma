@@ -107,6 +107,7 @@ model Company {
   masterData      MasterData[]
   importBatches   ImportBatch[]
   departmentScheduleRules DepartmentScheduleRule[]
+  positionScheduleRules PositionScheduleRule[]
 
   @@index([status, deletedAt])
 }
@@ -224,9 +225,25 @@ model Position {
   updatedAt DateTime   @updatedAt
   deletedAt DateTime?
   employees Employee[]
+  scheduleRule PositionScheduleRule?
 
   @@unique([companyId, code])
   @@index([companyId, deletedAt])
+}
+
+model PositionScheduleRule {
+  id                   String   @id @default(cuid())
+  companyId            String
+  company              Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  positionId           String   @unique
+  position             Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  allowedShiftIds      Json
+  forbiddenOffWeekdays Json
+  rotation             String   @default("DAILY")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([companyId])
 }
 
 model Employee {
