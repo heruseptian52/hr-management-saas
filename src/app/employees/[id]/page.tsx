@@ -8,12 +8,15 @@ const iso = (date: Date | null) => date?.toISOString().slice(0, 10) ?? "";
 export default async function EmployeeDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; error?: string }> }) {
   let tenant; try { tenant = await requirePermission("employees", "view"); } catch { redirect("/dashboard"); }
   const { id } = await params;
-  const [employee, branches, departments, positions, history] = await Promise.all([
+  const [employee, branches, departments, positions] = await Promise.all([
     db.employee.findFirst({ where: { id, companyId: tenant.companyId, deletedAt: null }, include: { branch: true, department: true, position: true } }),
-    db.branch.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }), db.department.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }), db.position.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }),
-    db.auditLog.findMany({ where: { companyId: tenant.companyId, entityType: "Employee", entityId: id }, include: { actor: { select: { fullName: true } } }, orderBy: { createdAt: "desc" }, take: 30 }),
+    db.branch.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }),
+    db.department.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }),
+    db.position.findMany({ where: { companyId: tenant.companyId, deletedAt: null } }),
   ]);
-  if (!employee) notFound(); const message = await searchParams, editable = hasPermission(tenant.membership.role.permissions, "employees", "edit");
+  if (!employee) notFound();
+  const history = await db.auditLog.findMany({ where: { companyId: tenant.companyId, entityType: "Employee", entityId: id }, include: { actor: { select: { fullName: true } } }, orderBy: { createdAt: "desc" }, take: 30 }).catch(() => []);
+  const message = await searchParams, editable = hasPermission(tenant.membership.role.permissions, "employees", "edit");
   return <main className="settings-page"><section className="settings-card"><header><div><span className="eyebrow">KARYAWAN · {employee.employeeNumber}</span><h1>{employee.fullName}</h1><p>{employee.position?.name ?? "Tanpa jabatan"} · {employee.department?.name ?? "Tanpa departemen"}</p></div><a href="/employees">Kembali</a></header>
     {message.saved && <div className="form-success">Data karyawan berhasil diperbarui.</div>}{message.error && <div className="form-error">Perubahan gagal disimpan.</div>}
     <form className="settings-form employee-form employee-profile-form" action="/api/employees/update" method="post"><input type="hidden" name="employeeId" value={employee.id}/>
