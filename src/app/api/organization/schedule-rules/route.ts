@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
     const previous = await db.departmentScheduleRule.findUnique({ where: { departmentId: department.id } });
     const rule = await db.departmentScheduleRule.upsert({
       where: { departmentId: department.id },
-      create: { companyId: tenant.companyId, departmentId: department.id, allowedShiftIds, forbiddenOffWeekdays, rotation: parsed.data.rotation },
-      update: { allowedShiftIds, forbiddenOffWeekdays, rotation: parsed.data.rotation },
+      create: { companyId: tenant.companyId, departmentId: department.id, allowedShiftIds, forbiddenOffWeekdays, rotation: parsed.rotation },
+      update: { allowedShiftIds, forbiddenOffWeekdays, rotation: parsed.rotation },
     });
     await db.auditLog.create({
       data: {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         entityType: "DepartmentScheduleRule",
         entityId: rule.id,
         previousValue: previous ? { allowedShiftIds: previous.allowedShiftIds, forbiddenOffWeekdays: previous.forbiddenOffWeekdays, rotation: previous.rotation } : undefined,
-        newValue: { department: department.name, allowedShiftIds, forbiddenOffWeekdays, rotation: parsed.data.rotation },
+        newValue: { department: department.name, allowedShiftIds, forbiddenOffWeekdays, rotation: parsed.rotation },
       },
     });
     return NextResponse.redirect(new URL("/organization/schedule-rules?saved=1", appUrl(request)), 303);
