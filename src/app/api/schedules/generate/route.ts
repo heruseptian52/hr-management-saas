@@ -33,7 +33,8 @@ export async function POST(request: NextRequest) {
       db.departmentScheduleRule.findMany({ where: { companyId: tenant.companyId, ...(departmentId ? { departmentId } : {}) } }),
       db.positionScheduleRule.findMany({ where: { companyId: tenant.companyId } }),
     ]);
-    if (!rawEmployees.length || !shifts.length) throw new Error("MISSING_DATA");
+    if (!rawEmployees.length) throw new Error("NO_EMPLOYEES");
+    if (!shifts.length) throw new Error("NO_SHIFTS");
     const ruleMap = new Map(rules.map(rule => [rule.departmentId, rule]));
     const positionRuleMap = new Map(positionRules.map(rule => [rule.positionId, rule]));
     const employees = rawEmployees.map(employee => {
@@ -42,8 +43,11 @@ export async function POST(request: NextRequest) {
       let allowedShiftIds = shifts.filter(shift => !shift.departmentId || shift.departmentId === employee.departmentId).map(shift => shift.id);
       const departmentAllowed = stringList(rule?.allowedShiftIds);
       const positionAllowed = stringList(positionRule?.allowedShiftIds);
-      if (departmentAllowed.length) allowedShiftIds = allowedShiftIds.filter(id => departmentAllowed.includes(id));
+      // A jabatan is the most specific rule. Use it as the override when set;
+      // otherwise inherit the department restriction. This prevents one
+      // conflicting legacy rule from blocking the whole company's schedule.
       if (positionAllowed.length) allowedShiftIds = allowedShiftIds.filter(id => positionAllowed.includes(id));
+      else if (departmentAllowed.length) allowedShiftIds = allowedShiftIds.filter(id => departmentAllowed.includes(id));
       if (!allowedShiftIds.length) throw new Error("NO_ALLOWED_SHIFT");
       const forbiddenOffWeekdays = [...new Set([...numberList(rule?.forbiddenOffWeekdays), ...numberList(positionRule?.forbiddenOffWeekdays)])];
       return { id: employee.id, monthlyDaysOff: employee.monthlyDaysOff, allowedShiftIds, forbiddenOffWeekdays };
@@ -64,7 +68,10 @@ export async function POST(request: NextRequest) {
     });
     await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "GENERATE_MISSING", module: "schedules", entityType: "Schedule", entityId: schedule.id, newValue: { month: parsed.data.month, employees: employees.length, assignmentsConsidered: generated.length, rotation, departmentRulesApplied: rules.length, positionRulesApplied: positionRules.length, existingAssignmentsPreserved: true } } });
     return NextResponse.redirect(new URL(`/schedules?month=${parsed.data.month}&branchId=${branchId ?? ""}&departmentId=${departmentId ?? ""}&saved=schedule`, appUrl(request)), 303);
-  } catch {
-    return NextResponse.redirect(new URL("/schedules?error=generation", appUrl(request)), 303);
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "GENERATION_FAILED";
+    console.error("schedule generation failed", code);
+    const safe = ["NO_EMPLOYEES", "NO_SHIFTS", "NO_ALLOWED_SHIFT", "SCHEDULE_LOCKED", "BRANCH", "DEPARTMENT"].includes(code) ? code.toLowerCase() : "generation";
+    return NextResponse.redirect(new URL(`/schedules?error=${safe}`, appUrl(request)), 303);
   }
 }
