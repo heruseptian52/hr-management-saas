@@ -1,3 +1,4 @@
+import { ensureSchedulingRuleSchema } from "@/lib/scheduling-rule-schema";
 import { db } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
 import { requireTenant } from "@/lib/tenant";
@@ -9,6 +10,7 @@ const numbers=(value:unknown)=>Array.isArray(value)?value.map(Number):[];
 
 export default async function PositionScheduleRulesPage({searchParams}:{searchParams:Promise<{saved?:string;error?:string}>}) {
   let tenant; try { tenant=await requireTenant(); } catch { redirect("/login"); }
+  await ensureSchedulingRuleSchema();
   const permissions=tenant.membership.role.permissions;
   if(!hasPermission(permissions,"positions","view")) redirect("/dashboard");
   const editable=hasPermission(permissions,"positions","edit");
