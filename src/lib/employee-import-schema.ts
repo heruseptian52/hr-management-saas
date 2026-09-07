@@ -40,7 +40,30 @@ export async function ensureEmployeeImportSchema() {
       CONSTRAINT "ImportBatch_pkey" PRIMARY KEY ("id")
     )
   `);
-  await db.$executeRawUnsafe('ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "importBatchId" TEXT');
+  await db.$executeRawUnsafe('ALTER TABLE "Employee" ALTER COLUMN "joinDate" DROP NOT NULL');
+  await db.$executeRawUnsafe('ALTER TABLE "Employee" ALTER COLUMN "employmentType" DROP NOT NULL');
+  await db.$executeRawUnsafe(`
+    ALTER TABLE "Employee"
+      ADD COLUMN IF NOT EXISTS "additionalPhone" TEXT,
+      ADD COLUMN IF NOT EXISTS "placeOfBirth" TEXT,
+      ADD COLUMN IF NOT EXISTS "gender" TEXT,
+      ADD COLUMN IF NOT EXISTS "religion" TEXT,
+      ADD COLUMN IF NOT EXISTS "maritalStatus" TEXT,
+      ADD COLUMN IF NOT EXISTS "nationalId" TEXT,
+      ADD COLUMN IF NOT EXISTS "familyCardNumber" TEXT,
+      ADD COLUMN IF NOT EXISTS "taxNumber" TEXT,
+      ADD COLUMN IF NOT EXISTS "contractStartDate" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "contractEndDate" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "stopDate" TIMESTAMP(3),
+      ADD COLUMN IF NOT EXISTS "terminationReason" TEXT,
+      ADD COLUMN IF NOT EXISTS "employeeStatusLabel" TEXT,
+      ADD COLUMN IF NOT EXISTS "bankName" TEXT,
+      ADD COLUMN IF NOT EXISTS "bankAccountNumber" TEXT,
+      ADD COLUMN IF NOT EXISTS "bankAccountHolder" TEXT,
+      ADD COLUMN IF NOT EXISTS "bpjsHealth" TEXT,
+      ADD COLUMN IF NOT EXISTS "bpjsEmployment" TEXT,
+      ADD COLUMN IF NOT EXISTS "importBatchId" TEXT
+  `);
   await db.$executeRawUnsafe('CREATE UNIQUE INDEX IF NOT EXISTS "MasterData_companyId_category_code_key" ON "MasterData"("companyId", "category", "code")');
   await db.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "MasterData_companyId_category_isActive_deletedAt_idx" ON "MasterData"("companyId", "category", "isActive", "deletedAt")');
   await db.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "ImportBatch_companyId_dataType_createdAt_idx" ON "ImportBatch"("companyId", "dataType", "createdAt")');
