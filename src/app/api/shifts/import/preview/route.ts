@@ -1,0 +1,6 @@
+import { requirePermission } from "@/lib/authorization";
+import { db } from "@/lib/db";
+import { parseWorkbook } from "@/lib/excel";
+import { parseShiftRows,shiftImportKey } from "@/lib/shift-import";
+import { NextRequest,NextResponse } from "next/server";
+export async function POST(request:NextRequest){try{const tenant=await requirePermission("shifts","create"),file=(await request.formData()).get("file");if(!file||typeof file==="string"||!/\.(xlsx|xls)$/i.test(file.name)||file.size>10*1024*1024)return NextResponse.json({error:"File XLSX/XLS maksimal 10 MB"},{status:400});const parsed=parseWorkbook(Buffer.from(await file.arrayBuffer())),existing=await db.shift.findMany({where:{companyId:tenant.companyId},select:{code:true}}),result=parseShiftRows(parsed.headers,parsed.rows,new Set(existing.map(item=>shiftImportKey(item.code))));return NextResponse.json({filename:file.name,mapping:result.mapping,rows:result.rows,summary:{total:result.rows.length,new:result.rows.filter(item=>item.status==="NEW").length,update:result.rows.filter(item=>item.status==="UPDATE").length,error:result.rows.filter(item=>item.status==="ERROR").length}});}catch(error){console.error("SHIFT_IMPORT_PREVIEW",error);return NextResponse.json({error:"File shift tidak dapat dibaca"},{status:400});}}
