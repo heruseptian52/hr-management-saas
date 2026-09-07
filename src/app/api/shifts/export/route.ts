@@ -1,0 +1,6 @@
+import { requirePermission } from "@/lib/authorization";
+import { db } from "@/lib/db";
+import { styledSheet, workbookResponse } from "@/lib/excel";
+import * as XLSX from "xlsx";
+
+export async function GET(){try{const tenant=await requirePermission("shifts","export"),shifts=await db.shift.findMany({where:{companyId:tenant.companyId},include:{branch:true,department:true},orderBy:[{deletedAt:"asc"},{startTime:"asc"},{name:"asc"}]});const rows:unknown[][]=[["Kode Shift","Nama Shift","Jam Masuk","Jam Pulang","Istirahat (menit)","Toleransi (menit)","Minimum Staf","Maksimum Staf","Cabang","Departemen","Warna","Status"]];for(const item of shifts)rows.push([item.code,item.name,item.startTime,item.endTime,item.breakMinutes,item.lateToleranceMin,item.minStaff,item.maxStaff??"",item.branch?.name??"Semua",item.department?.name??"Semua",item.color,item.deletedAt?"Nonaktif":"Aktif"]);const workbook=XLSX.utils.book_new();XLSX.utils.book_append_sheet(workbook,styledSheet(rows,[16,24,14,14,20,20,16,18,24,24,14,14]),"Data Shift");await db.auditLog.create({data:{companyId:tenant.companyId,actorUserId:tenant.session.userId,action:"EXPORT",module:"shifts",entityType:"Shift",newValue:{total:shifts.length}}});return workbookResponse(workbook,`data-shift-${new Date().toISOString().slice(0,10)}.xlsx`);}catch{return new Response("Tidak diizinkan",{status:403});}}
