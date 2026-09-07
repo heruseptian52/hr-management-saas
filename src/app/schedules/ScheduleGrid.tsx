@@ -19,7 +19,7 @@ export function ScheduleGrid({ rows, shifts, days, month, editable }: { rows: Ro
     const body = new FormData(); body.set("assignmentId", assignmentId); body.set("shiftId", shiftId); body.set("returnMonth", month);
     const response = await fetch("/api/schedules/assignment", { method: "POST", body, headers: { Accept: "application/json" } });
     setSaving(null);
-    if (!response.ok) return setMessage("Perubahan gagal disimpan.");
+    if (!response.ok) { const data = await response.json().catch(() => ({})); return setMessage(data.error || "Perubahan gagal disimpan."); }
     setMessage("Jadwal tersimpan."); router.refresh();
   }
 
