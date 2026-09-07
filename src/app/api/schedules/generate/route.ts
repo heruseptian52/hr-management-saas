@@ -1,3 +1,4 @@
+import { ensureSchedulingRuleSchema } from "@/lib/scheduling-rule-schema";
 import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
@@ -12,6 +13,7 @@ const numberList = (value: unknown) => Array.isArray(value) ? value.map(Number).
 export async function POST(request: NextRequest) {
   try {
     const tenant = await requirePermission("schedules", "create");
+    await ensureSchedulingRuleSchema();
     const parsed = schema.safeParse(Object.fromEntries(await request.formData()));
     if (!parsed.success) throw new Error("INVALID");
     const [year, month] = parsed.data.month.split("-").map(Number);
