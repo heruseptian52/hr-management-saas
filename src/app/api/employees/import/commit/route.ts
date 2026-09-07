@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       const row = parsed.rows[index], errors: string[] = [], warnings: string[] = [], fullName = tidyEmployeeText(mapped(row, "fullName"));
       if (!fullName) errors.push("Nama karyawan kosong");
       const emailRaw = importKey(mapped(row, "email")), emailValid = !emailRaw || z.string().email().safeParse(emailRaw).success; if (!emailValid) warnings.push("Format email tidak valid; email dikosongkan");
-      const nationalIdOriginal = importText(mapped(row, "nationalId")), nationalId = normalizeNationalId(nationalIdOriginal); if (nationalId && nationalId.length !== 16) warnings.push(`NIK bukan 16 digit: ${nationalIdOriginal}`);
+      const nationalIdOriginal = importText(mapped(row, "nationalId")), nationalId = normalizeNationalId(nationalIdOriginal);
       const phone = normalizePhones(mapped(row, "phone")); if (phone && phoneDigits(phone).length < 9) warnings.push(`Nomor telepon perlu diperiksa: ${phone}`);
       const join = parseEmployeeDate(mapped(row, "joinDate")), contractEnd = parseEmployeeDate(mapped(row, "contractEndDate")), stop = parseEmployeeDate(mapped(row, "stopDate")), birth = parseEmployeeDate(mapped(row, "birthDate"));
       for (const date of [join, contractEnd, stop, birth]) if (date.warning) warnings.push(date.warning);
