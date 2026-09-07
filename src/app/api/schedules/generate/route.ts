@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) throw new Error("INVALID");
     const [year, month] = parsed.data.month.split("-").map(Number);
     const branchId = parsed.data.branchId || null, departmentId = parsed.data.departmentId || null;
+    const replaceDraft = form.get("replaceDraft") === "on";
     if (branchId && !(await db.branch.count({ where: { id: branchId, companyId: tenant.companyId, deletedAt: null } }))) throw new Error("BRANCH");
     if (departmentId && !(await db.department.count({ where: { id: departmentId, companyId: tenant.companyId, deletedAt: null } }))) throw new Error("DEPARTMENT");
 
@@ -62,13 +63,20 @@ export async function POST(request: NextRequest) {
       const existing = await transaction.schedule.findFirst({ where: { companyId: tenant.companyId, month: monthDate, branchId, departmentId } });
       if (existing && existing.status !== "DRAFT") throw new Error("SCHEDULE_LOCKED");
       const current = existing ?? await transaction.schedule.create({ data: { companyId: tenant.companyId, month: monthDate, name: `Jadwal ${parsed.data.month}`, branchId, departmentId } });
+      // Rebuilding is deliberately limited to a DRAFT schedule. It makes the
+      // employee checkboxes authoritative without touching published history.
+      if (existing && replaceDraft) {
+        await transaction.scheduleAssignment.deleteMany({
+          where: { companyId: tenant.companyId, scheduleId: current.id },
+        });
+      }
       await transaction.scheduleAssignment.createMany({
         data: generated.map(item => ({ companyId: tenant.companyId, scheduleId: current.id, employeeId: item.employeeId, shiftId: item.shiftId, type: item.type, date: new Date(Date.UTC(year, month - 1, item.day)) })),
         skipDuplicates: true,
       });
       return current;
     });
-    await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "GENERATE_MISSING", module: "schedules", entityType: "Schedule", entityId: schedule.id, newValue: { month: parsed.data.month, employees: employees.length, assignmentsConsidered: generated.length, rotation, departmentRulesApplied: rules.length, positionRulesApplied: positionRules.length, existingAssignmentsPreserved: true } } });
+    await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: replaceDraft ? "REGENERATE_DRAFT" : "GENERATE_MISSING", module: "schedules", entityType: "Schedule", entityId: schedule.id, newValue: { month: parsed.data.month, employees: employees.length, selectedEmployeeIds, assignmentsConsidered: generated.length, rotation, departmentRulesApplied: rules.length, positionRulesApplied: positionRules.length, existingAssignmentsPreserved: !replaceDraft } } });
     return NextResponse.redirect(new URL(`/schedules?month=${parsed.data.month}&branchId=${branchId ?? ""}&departmentId=${departmentId ?? ""}&saved=schedule`, appUrl(request)), 303);
   } catch (error) {
     const code = error instanceof Error ? error.message : "GENERATION_FAILED";
