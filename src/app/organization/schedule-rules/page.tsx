@@ -1,3 +1,4 @@
+import { ensureSchedulingRuleSchema } from "@/lib/scheduling-rule-schema";
 import { db } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
 import { requireTenant } from "@/lib/tenant";
