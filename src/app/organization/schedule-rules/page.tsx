@@ -34,7 +34,7 @@ export default async function DepartmentScheduleRulesPage({ searchParams }: { se
   ]);
   const message = await searchParams;
   return <main className="settings-page"><section className="settings-card">
-    <header><div><span className="eyebrow">PANBOY HR · PENJADWALAN</span><h1>Kelompok & aturan shift departemen</h1><p>Batasi shift dan hari libur untuk setiap departemen di {tenant.membership.company.name}.</p></div><a href="/organization">Kembali</a></header>
+    <header><div><span className="eyebrow">PANBOY HR · PENJADWALAN</span><h1>Kelompok & aturan shift departemen</h1><p>Batasi shift dan hari libur untuk setiap departemen di {tenant.membership.company.name}.</p></div><div className="header-actions"><a href="/organization/position-schedule-rules">Aturan jabatan</a><a href="/organization">Kembali</a></div></header>
     {message.saved && <div className="form-success">Aturan departemen berhasil disimpan dan langsung dipakai generator jadwal.</div>}
     {message.error && <div className="form-error">Aturan gagal disimpan. Pastikan shift masih aktif dan berasal dari perusahaan ini.</div>}
     <div className="rule-help"><b>Cara kerja</b><span>Shift yang dicentang adalah shift yang boleh diterima anggota departemen.</span><span>Hari “tidak boleh libur” tidak akan dipilih generator dan ditolak pada edit manual.</span></div>
