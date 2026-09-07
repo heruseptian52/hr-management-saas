@@ -19,26 +19,32 @@ export async function POST(request: NextRequest) {
     if (branchId && !(await db.branch.count({ where: { id: branchId, companyId: tenant.companyId, deletedAt: null } }))) throw new Error("BRANCH");
     if (departmentId && !(await db.department.count({ where: { id: departmentId, companyId: tenant.companyId, deletedAt: null } }))) throw new Error("DEPARTMENT");
 
-    const [rawEmployees, shifts, rules] = await Promise.all([
+    const [rawEmployees, shifts, rules, positionRules] = await Promise.all([
       db.employee.findMany({
         where: { companyId: tenant.companyId, deletedAt: null, employmentStatus: "ACTIVE", ...(branchId ? { branchId } : {}), ...(departmentId ? { departmentId } : {}) },
-        select: { id: true, monthlyDaysOff: true, departmentId: true },
+        select: { id: true, monthlyDaysOff: true, departmentId: true, positionId: true },
       }),
       db.shift.findMany({
         where: { companyId: tenant.companyId, deletedAt: null, ...(branchId ? { OR: [{ branchId: null }, { branchId }] } : {}) },
         select: { id: true, departmentId: true },
       }),
       db.departmentScheduleRule.findMany({ where: { companyId: tenant.companyId, ...(departmentId ? { departmentId } : {}) } }),
+      db.positionScheduleRule.findMany({ where: { companyId: tenant.companyId } }),
     ]);
     if (!rawEmployees.length || !shifts.length) throw new Error("MISSING_DATA");
     const ruleMap = new Map(rules.map(rule => [rule.departmentId, rule]));
+    const positionRuleMap = new Map(positionRules.map(rule => [rule.positionId, rule]));
     const employees = rawEmployees.map(employee => {
       const rule = employee.departmentId ? ruleMap.get(employee.departmentId) : undefined;
-      const compatible = shifts.filter(shift => !shift.departmentId || shift.departmentId === employee.departmentId).map(shift => shift.id);
-      const configured = stringList(rule?.allowedShiftIds);
-      const allowedShiftIds = configured.length ? compatible.filter(id => configured.includes(id)) : compatible;
+      const positionRule = employee.positionId ? positionRuleMap.get(employee.positionId) : undefined;
+      let allowedShiftIds = shifts.filter(shift => !shift.departmentId || shift.departmentId === employee.departmentId).map(shift => shift.id);
+      const departmentAllowed = stringList(rule?.allowedShiftIds);
+      const positionAllowed = stringList(positionRule?.allowedShiftIds);
+      if (departmentAllowed.length) allowedShiftIds = allowedShiftIds.filter(id => departmentAllowed.includes(id));
+      if (positionAllowed.length) allowedShiftIds = allowedShiftIds.filter(id => positionAllowed.includes(id));
       if (!allowedShiftIds.length) throw new Error("NO_ALLOWED_SHIFT");
-      return { id: employee.id, monthlyDaysOff: employee.monthlyDaysOff, allowedShiftIds, forbiddenOffWeekdays: numberList(rule?.forbiddenOffWeekdays) };
+      const forbiddenOffWeekdays = [...new Set([...numberList(rule?.forbiddenOffWeekdays), ...numberList(positionRule?.forbiddenOffWeekdays)])];
+      return { id: employee.id, monthlyDaysOff: employee.monthlyDaysOff, allowedShiftIds, forbiddenOffWeekdays };
     });
     const selectedRule = departmentId ? ruleMap.get(departmentId) : undefined;
     const rotation = (selectedRule?.rotation as RotationMode | undefined) ?? parsed.data.rotation;
@@ -54,7 +60,7 @@ export async function POST(request: NextRequest) {
       });
       return current;
     });
-    await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "GENERATE_MISSING", module: "schedules", entityType: "Schedule", entityId: schedule.id, newValue: { month: parsed.data.month, employees: employees.length, assignmentsConsidered: generated.length, rotation, departmentRulesApplied: rules.length, existingAssignmentsPreserved: true } } });
+    await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "GENERATE_MISSING", module: "schedules", entityType: "Schedule", entityId: schedule.id, newValue: { month: parsed.data.month, employees: employees.length, assignmentsConsidered: generated.length, rotation, departmentRulesApplied: rules.length, positionRulesApplied: positionRules.length, existingAssignmentsPreserved: true } } });
     return NextResponse.redirect(new URL(`/schedules?month=${parsed.data.month}&branchId=${branchId ?? ""}&departmentId=${departmentId ?? ""}&saved=schedule`, appUrl(request)), 303);
   } catch {
     return NextResponse.redirect(new URL("/schedules?error=generation", appUrl(request)), 303);
