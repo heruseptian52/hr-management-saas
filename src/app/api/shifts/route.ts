@@ -9,14 +9,15 @@ const schema = z.object({ code: z.string().trim().toUpperCase().regex(/^[A-Z0-9_
 export async function POST(request: NextRequest) {
   try {
     const tenant = await requirePermission("shifts", "create");
-    const parsed = schema.safeParse(Object.fromEntries(await request.formData()));
-    if (!parsed.success) return NextResponse.redirect(new URL("/schedules?error=shift_validation", appUrl(request)), 303);
+    const form = await request.formData(), returnTo = form.get("returnTo") === "/shifts" ? "/shifts" : "/schedules";
+    const parsed = schema.safeParse(Object.fromEntries(form));
+    if (!parsed.success) return NextResponse.redirect(new URL(`${returnTo}?error=shift_validation`, appUrl(request)), 303);
     const previous = await db.shift.findUnique({ where: { companyId_code: { companyId: tenant.companyId, code: parsed.data.code } } });
-    if (previous && !previous.deletedAt) return NextResponse.redirect(new URL("/schedules?error=shift_duplicate", appUrl(request)), 303);
+    if (previous && !previous.deletedAt) return NextResponse.redirect(new URL(`${returnTo}?error=shift_duplicate`, appUrl(request)), 303);
     const shift = previous
       ? await db.shift.update({ where: { id: previous.id }, data: { ...parsed.data, deletedAt: null } })
       : await db.shift.create({ data: { companyId: tenant.companyId, ...parsed.data } });
     await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "CREATE", module: "shifts", entityType: "Shift", entityId: shift.id, newValue: parsed.data } });
-    return NextResponse.redirect(new URL("/schedules?saved=shift", appUrl(request)), 303);
+    return NextResponse.redirect(new URL(`${returnTo}?saved=shift`, appUrl(request)), 303);
   } catch { return NextResponse.redirect(new URL("/schedules?error=shift_failed", appUrl(request)), 303); }
 }
