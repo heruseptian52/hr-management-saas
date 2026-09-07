@@ -14,16 +14,21 @@ export async function POST(request: NextRequest) {
     const parsed = schema.parse(Object.fromEntries(await request.formData()));
     const assignment = await db.scheduleAssignment.findFirstOrThrow({
       where: { id: parsed.assignmentId, companyId: tenant.companyId, schedule: { status: "DRAFT" } },
-      include: { employee: { select: { departmentId: true } } },
+      include: { employee: { select: { departmentId: true, positionId: true } } },
     });
-    const rule = assignment.employee.departmentId ? await db.departmentScheduleRule.findFirst({ where: { companyId: tenant.companyId, departmentId: assignment.employee.departmentId } }) : null;
+    const [rule, positionRule] = await Promise.all([
+      assignment.employee.departmentId ? db.departmentScheduleRule.findFirst({ where: { companyId: tenant.companyId, departmentId: assignment.employee.departmentId } }) : null,
+      assignment.employee.positionId ? db.positionScheduleRule.findFirst({ where: { companyId: tenant.companyId, positionId: assignment.employee.positionId } }) : null,
+    ]);
     if (parsed.shiftId === "OFF") {
-      if (rule && days(rule.forbiddenOffWeekdays).includes(assignment.date.getUTCDay())) throw new Error("OFF_NOT_ALLOWED");
+      const forbidden = [...days(rule?.forbiddenOffWeekdays), ...days(positionRule?.forbiddenOffWeekdays)];
+      if (forbidden.includes(assignment.date.getUTCDay())) throw new Error("OFF_NOT_ALLOWED");
     } else {
       const shift = await db.shift.findFirstOrThrow({ where: { id: parsed.shiftId, companyId: tenant.companyId, deletedAt: null }, select: { id: true, departmentId: true } });
       if (shift.departmentId && shift.departmentId !== assignment.employee.departmentId) throw new Error("WRONG_DEPARTMENT");
-      const allowed = list(rule?.allowedShiftIds);
-      if (allowed.length && !allowed.includes(shift.id)) throw new Error("SHIFT_NOT_ALLOWED");
+      const departmentAllowed = list(rule?.allowedShiftIds);
+      const positionAllowed = list(positionRule?.allowedShiftIds);
+      if ((departmentAllowed.length && !departmentAllowed.includes(shift.id)) || (positionAllowed.length && !positionAllowed.includes(shift.id))) throw new Error("SHIFT_NOT_ALLOWED");
     }
     await db.$transaction([
       db.scheduleAssignment.update({ where: { id: assignment.id }, data: parsed.shiftId === "OFF" ? { type: "OFF", shiftId: null } : { type: "WORK", shiftId: parsed.shiftId } }),
