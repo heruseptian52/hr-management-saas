@@ -2,6 +2,7 @@ import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
 import { hasPermission } from "@/lib/permissions";
 import { notFound, redirect } from "next/navigation";
+import { EmployeeDeleteForm } from "../EmployeeDeleteForm";
 
 const iso = (date: Date | null) => date?.toISOString().slice(0, 10) ?? "";
 export default async function EmployeeDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; error?: string }> }) {
@@ -24,6 +25,7 @@ export default async function EmployeeDetail({ params, searchParams }: { params:
       <h2 className="wide">F. Bank & Payroll</h2><label>Nama bank<input name="bankName" defaultValue={employee.bankName ?? ""} disabled={!editable}/></label><label>No rekening<input name="bankAccountNumber" defaultValue={employee.bankAccountNumber ?? ""} disabled={!editable}/></label><label>Atas nama<input name="bankAccountHolder" defaultValue={employee.bankAccountHolder ?? ""} disabled={!editable}/></label><label>BPJS Kesehatan<input name="bpjsHealth" defaultValue={employee.bpjsHealth ?? ""} disabled={!editable}/></label><label>BPJS Ketenagakerjaan<input name="bpjsEmployment" defaultValue={employee.bpjsEmployment ?? ""} disabled={!editable}/></label>
       {editable && <button className="wide">Simpan perubahan</button>}
     </form>
+    {hasPermission(tenant.membership.role.permissions, "employees", "delete") && <div className="danger-zone"><h2>Hapus karyawan</h2><p>Karyawan akan dinonaktifkan dan tidak tampil di daftar aktif. Riwayat audit tetap tersimpan.</p><EmployeeDeleteForm employeeId={employee.id} employeeName={employee.fullName}/></div>}
     <h2>Riwayat perubahan</h2><div className="timeline">{history.map(item => <article key={item.id}><span>{item.createdAt.toLocaleString("id-ID")}</span><strong>{item.action}</strong><p>{item.actor?.fullName ?? "System"}</p></article>)}{history.length === 0 && <p>Belum ada riwayat.</p>}</div>
   </section></main>;
 }
