@@ -1,3 +1,4 @@
+import { ensureSchedulingRuleSchema } from "@/lib/scheduling-rule-schema";
 import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
@@ -11,6 +12,7 @@ const days = (value: unknown) => Array.isArray(value) ? value.map(Number) : [];
 export async function POST(request: NextRequest) {
   try {
     const tenant = await requirePermission("schedules", "edit");
+    await ensureSchedulingRuleSchema();
     const parsed = schema.parse(Object.fromEntries(await request.formData()));
     const assignment = await db.scheduleAssignment.findFirstOrThrow({
       where: { id: parsed.assignmentId, companyId: tenant.companyId, schedule: { status: "DRAFT" } },
