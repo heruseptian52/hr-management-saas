@@ -1,3 +1,4 @@
+import { ensureSchedulingRuleSchema } from "@/lib/scheduling-rule-schema";
 import { appUrl } from "@/lib/app-url";
 import { requirePermission } from "@/lib/authorization";
 import { db } from "@/lib/db";
@@ -9,6 +10,7 @@ const schema = z.object({ positionId: z.string().cuid(), rotation: z.enum(["DAIL
 export async function POST(request: NextRequest) {
   try {
     const tenant = await requirePermission("positions", "edit");
+    await ensureSchedulingRuleSchema();
     const form = await request.formData();
     const parsed = schema.parse(Object.fromEntries(form));
     const allowedShiftIds = [...new Set(form.getAll("allowedShiftIds").map(String))];
