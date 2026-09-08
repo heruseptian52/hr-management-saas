@@ -8,7 +8,7 @@ const schema = z.object({
   employeeNumber: z.string().trim().toUpperCase().min(2).max(30), fullName: z.string().trim().min(2).max(120),
   email: z.string().trim().email().or(z.literal("")), phone: z.string().trim().max(30), joinDate: z.coerce.date(),
   branchId: z.string().cuid().or(z.literal("")), departmentId: z.string().cuid().or(z.literal("")), positionId: z.string().cuid().or(z.literal("")),
-  employmentType: z.enum(["PERMANENT", "CONTRACT", "INTERNSHIP", "FREELANCE", "PART_TIME"]), monthlyDaysOff: z.coerce.number().int().min(0).max(31),
+  contractTypeLabel: z.string().trim().max(80), monthlyDaysOff: z.coerce.number().int().min(0).max(31),
 });
 
 export async function POST(request: NextRequest) {
@@ -23,7 +23,8 @@ export async function POST(request: NextRequest) {
       parsed.data.positionId ? db.position.count({ where: { id: parsed.data.positionId, companyId: tenant.companyId, deletedAt: null } }) : 1,
     ]);
     if (relationIds.length && [branchCount, departmentCount, positionCount].includes(0)) throw new Error("CROSS_TENANT_RELATION");
-    const data = { ...parsed.data, companyId: tenant.companyId, email: parsed.data.email || null, phone: parsed.data.phone || null, branchId: parsed.data.branchId || null, departmentId: parsed.data.departmentId || null, positionId: parsed.data.positionId || null };
+    const contractKey=parsed.data.contractTypeLabel.toLowerCase(), employmentType=contractKey.includes("tetap")?"PERMANENT":contractKey.includes("magang")?"INTERNSHIP":contractKey.includes("freelance")||contractKey.includes("harian")?"FREELANCE":contractKey.includes("paruh")?"PART_TIME":"CONTRACT";
+    const data = { ...parsed.data, employmentType: employmentType as "PERMANENT"|"CONTRACT"|"INTERNSHIP"|"FREELANCE"|"PART_TIME", contractTypeLabel: parsed.data.contractTypeLabel || null, companyId: tenant.companyId, email: parsed.data.email || null, phone: parsed.data.phone || null, branchId: parsed.data.branchId || null, departmentId: parsed.data.departmentId || null, positionId: parsed.data.positionId || null };
     const employee = await db.employee.create({ data });
     await db.auditLog.create({ data: { companyId: tenant.companyId, actorUserId: tenant.session.userId, action: "CREATE", module: "employees", entityType: "Employee", entityId: employee.id, newValue: { employeeNumber: employee.employeeNumber, fullName: employee.fullName } } });
     return NextResponse.redirect(new URL("/employees?saved=1", appUrl(request)), 303);
@@ -31,4 +32,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(new URL("/employees?error=duplicate", appUrl(request)), 303);
   }
 }
-

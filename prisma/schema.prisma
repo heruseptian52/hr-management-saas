@@ -282,6 +282,7 @@ model Employee {
   positionId       String?
   position         Position?            @relation(fields: [positionId], references: [id], onDelete: Restrict)
   employmentType   EmploymentType?
+  contractTypeLabel String?
   employmentStatus EmployeeStatus       @default(ACTIVE)
   monthlyDaysOff   Int                  @default(4)
   baseSalary       Decimal?             @db.Decimal(18, 2)
