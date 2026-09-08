@@ -212,6 +212,14 @@ p { color:var(--muted); line-height:1.7; }
 .employee-list-item { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; border-bottom:1px solid #e2e8f0; }
 .employee-list-item .employee-link { border-bottom:0; }
 .employee-list-item form { padding:0 12px; }
+.employee-bulk-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:12px; margin-top:18px; border:1px solid #bfdbfe; border-radius:10px; background:#f8fbff; }
+.employee-bulk-bar select,.employee-bulk-bar button { padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; background:white; font-weight:700; }
+.employee-bulk-bar button { cursor:pointer; background:var(--primary); color:white; border-color:var(--primary); }
+.employee-bulk-bar button:disabled { opacity:.5; cursor:not-allowed; }
+.data-row.employee.employee-bulk-heading { min-width:980px; grid-template-columns:38px .8fr 1.5fr 1fr 1fr 1fr .8fr; background:#f8fafc; align-items:center; }
+.employee-bulk-heading label,.employee-checkbox { display:grid; place-items:center; }
+.employee-bulk-item { min-width:980px; grid-template-columns:38px minmax(800px,1fr) auto; }
+.employee-bulk-item .employee-checkbox { height:100%; }
 .danger-button { border:0; border-radius:8px; background:#dc2626; color:#fff; padding:9px 12px; font-weight:800; cursor:pointer; }
 .danger-button:hover { background:#b91c1c; }
 .danger-zone { margin-top:24px; padding:18px; border:1px solid #fecaca; border-radius:12px; background:#fff7f7; }
