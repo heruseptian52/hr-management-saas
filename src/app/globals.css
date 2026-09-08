@@ -126,6 +126,7 @@ p { color:var(--muted); line-height:1.7; }
 .master-groups .compact-list form { border:0; padding:0; }
 .master-groups .compact-list button { padding:6px; font-size:11px; }
 .master-links { display:flex; gap:12px; align-items:center; margin-top:22px; }.master-links h2{margin-right:auto}.master-links a{padding:10px;border-radius:8px;background:#eff6ff;color:#1d4ed8;text-decoration:none;font-weight:800}
+.master-bulk-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0;padding:12px;background:#f8fafc;border:1px solid #dbe4f0;border-radius:10px}.master-bulk-tools select,.master-bulk-tools button,.master-bulk-tools a{padding:9px 11px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1e293b;text-decoration:none;font-weight:800}.master-bulk-tools select{min-width:210px}
 .search-form { display:flex; gap:8px; margin-top:22px; }
 .search-form button { min-width:90px; }
 .standard-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:18px 0; }.standard-toolbar .search-form { margin:0; flex:1; max-width:520px; }.toolbar-actions { display:flex; flex-wrap:wrap; gap:7px; }.toolbar-actions>a,.toolbar-actions>button { padding:9px 11px; border:1px solid #cbd5e1; border-radius:8px; background:white; color:#1e293b; text-decoration:none; font-size:12px; font-weight:800; cursor:pointer; }

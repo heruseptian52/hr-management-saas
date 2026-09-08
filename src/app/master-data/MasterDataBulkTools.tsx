@@ -1,0 +1,4 @@
+"use client";
+import { useState } from "react";import { MasterDataImport } from "./MasterDataImport";
+type Option={category:string;label:string};
+export function MasterDataBulkTools({options,canImport,canExport}:{options:Option[];canImport:boolean;canExport:boolean}){const[selected,setSelected]=useState(options[0]?.category??""),current=options.find(x=>x.category===selected);return <div className="master-bulk-tools"><b>Kelola data massal</b><select value={selected} onChange={e=>setSelected(e.target.value)}>{options.map(x=><option key={x.category} value={x.category}>{x.label}</option>)}</select>{canImport&&current&&<MasterDataImport category={current.category} label={current.label}/>} {canExport&&<a href={`/api/master-data/export?category=${selected}`}>Export Excel</a>} {canImport&&<a href={`/api/master-data/template?category=${selected}`}>Download Template</a>}</div>}
