@@ -6,7 +6,7 @@ import * as XLSX from "xlsx";
 describe("employee import normalization", () => {
   it.each(["01 OKTOBER 2025", "17JANUARI 2025", "21 FEBRUARI 2006", "09-01-1984", "13 FEBUARI 1989"])("parses Indonesian date %s", value => expect(parseEmployeeDate(value).date).not.toBeNull());
   it("parses the date part of a combined birthplace and date", () => expect(parseEmployeeDate("SAMARINDA, 21 FEBRUARI 2006").date?.toISOString().slice(0, 10)).toBe("2006-02-21"));
-  it("warns without inventing an invalid date", () => { const result = parseEmployeeDate("31 APRIL 2026"); expect(result.date).toBeNull(); expect(result.warning).toContain("Tanggal tidak valid"); });
+  it("automatically clamps an impossible day to the final valid day", () => { const result = parseEmployeeDate("31 APRIL 2026"); expect(result.date?.toISOString().slice(0, 10)).toBe("2026-04-30"); expect(result.warning).toBeUndefined(); });
   it("keeps identifiers and multiple phones safe", () => { expect(normalizeNationalId("1234-5678-9012-345-6")).toBe("1234567890123456"); expect(normalizePhones("0000-0000 / 0000-0001")).toBe("0000-0000 / 0000-0001"); });
   it("tidies names while preserving acronyms", () => expect(tidyEmployeeText("LEADER DRIVER & GA")).toBe("Leader Driver & GA"));
 });
