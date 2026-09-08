@@ -19,6 +19,7 @@ export const ownerPermissions: PermissionMap = {
   branches: [...actions],
   departments: [...actions],
   positions: [...actions],
+  master_data: [...actions],
   shifts: [...actions],
   schedules: [...actions],
   attendance: [...actions],

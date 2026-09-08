@@ -1,0 +1,4 @@
+"use client";
+export function MasterDataActions({ id, name, active, canEdit, canDelete }: { id: string; name: string; active: boolean; canEdit: boolean; canDelete: boolean }) {
+  return <div className="master-item-actions">{canEdit && <form action="/api/master-data" method="post"><input type="hidden" name="id" value={id}/><input type="hidden" name="action" value="TOGGLE"/><button>{active ? "Nonaktifkan" : "Aktifkan"}</button></form>}{canDelete && <form action="/api/master-data" method="post" onSubmit={event => { if (!window.confirm(`Yakin ingin menghapus ${name}? Data yang sudah digunakan tidak dapat dihapus.`)) event.preventDefault(); }}><input type="hidden" name="id" value={id}/><input type="hidden" name="action" value="DELETE"/><button className="danger-button">Hapus</button></form>}</div>;
+}

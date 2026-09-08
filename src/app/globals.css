@@ -120,6 +120,8 @@ p { color:var(--muted); line-height:1.7; }
 .org-card input,.org-card select,.search-form input { width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; background:white; }
 .org-card button,.search-form button { border:0; border-radius:8px; padding:10px; background:var(--primary); color:white; font-weight:800; }
 .master-groups { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:25px; }
+.master-section { margin-top:28px; }.master-section>h2 { padding-bottom:8px; border-bottom:1px solid #e2e8f0; }.master-section .master-groups { margin-top:14px; }
+.master-item { grid-template-columns:24px minmax(100px,1fr)!important; }.master-item strong small { display:block; margin-top:3px; color:var(--muted); font-size:9px; }.master-item details,.master-item-actions { grid-column:1/-1; }.master-item details form { margin-top:7px; }.master-item-actions { display:flex; gap:6px; }.master-item-actions form { border:0!important; padding:0!important; flex:1; }.master-item-actions button { width:100%; }
 .master-groups .compact-list>div { grid-template-columns:24px 1fr auto; align-items:center; gap:6px; }
 .master-groups .compact-list form { border:0; padding:0; }
 .master-groups .compact-list button { padding:6px; font-size:11px; }
