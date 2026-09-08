@@ -108,8 +108,25 @@ model Company {
   importBatches   ImportBatch[]
   departmentScheduleRules DepartmentScheduleRule[]
   positionScheduleRules PositionScheduleRule[]
+  holidays        Holiday[]
 
   @@index([status, deletedAt])
+}
+
+model Holiday {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  date      DateTime
+  name      String
+  type      String   @default("PERUSAHAAN")
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, date, name])
+  @@index([companyId, date, isActive])
 }
 
 model User {
