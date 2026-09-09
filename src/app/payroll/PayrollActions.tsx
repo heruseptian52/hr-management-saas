@@ -1,0 +1,2 @@
+"use client";
+export function PayrollAction({action,periodId,label,className="",message,payment}:{action:string;periodId:string;label:string;className?:string;message:string;payment?:boolean}){return <form action="/api/payroll" method="post" onSubmit={e=>{if(!confirm(message))e.preventDefault()}}><input type="hidden" name="action" value={action}/><input type="hidden" name="periodId" value={periodId}/>{payment&&<input type="date" name="paymentDate" required/>}<button className={className}>{label}</button></form>}
