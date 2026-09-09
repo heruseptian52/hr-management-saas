@@ -1,0 +1,23 @@
+import { requirePermission } from "@/lib/authorization";
+import { db } from "@/lib/db";
+import { hasPermission } from "@/lib/permissions";
+import { redirect } from "next/navigation";
+import { LeaveActions } from "./LeaveActions";
+
+const statuses = ["PENDING", "APPROVED", "REJECTED", "CANCELLED"];
+export default async function LeaveRequestsPage({ searchParams }: { searchParams: Promise<{ status?: string; employeeId?: string; saved?: string; error?: string }> }) {
+  let tenant; try { tenant = await requirePermission("attendance", "view"); } catch { redirect("/dashboard"); }
+  const query = await searchParams, status = statuses.includes(query.status ?? "") ? query.status! : "", employeeId = query.employeeId ?? "";
+  const [employees, types, records] = await Promise.all([
+    db.employee.findMany({ where: { companyId: tenant.companyId, deletedAt: null, employmentStatus: "ACTIVE" }, orderBy: { fullName: "asc" } }),
+    db.masterData.findMany({ where: { companyId: tenant.companyId, category: "LEAVE_TYPE", isActive: true, deletedAt: null }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
+    db.leaveRequest.findMany({ where: { companyId: tenant.companyId, ...(status ? { status } : {}), ...(employeeId ? { employeeId } : {}) }, include: { employee: { include: { department: true, position: true } } }, orderBy: [{ createdAt: "desc" }] }),
+  ]);
+  const permissions = tenant.membership.role.permissions, canCreate = hasPermission(permissions, "attendance", "create"), canApprove = hasPermission(permissions, "attendance", "approve"), canEdit = hasPermission(permissions, "attendance", "edit"), canDelete = hasPermission(permissions, "attendance", "delete"), canExport = hasPermission(permissions, "attendance", "export");
+  return <main className="settings-page"><section className="settings-card"><header><div><span className="eyebrow">PANBOY HR</span><h1>Cuti & Izin</h1><p>Pengajuan dan persetujuan karyawan {tenant.membership.company.name}.</p></div><a href="/dashboard">Kembali</a></header>
+    {query.saved && <div className="form-success">Pengajuan berhasil diproses.</div>}{query.error === "overlap" && <div className="form-error">Tanggal bertabrakan dengan pengajuan aktif karyawan yang sama.</div>}{query.error && query.error !== "overlap" && <div className="form-error">Operasi gagal. Periksa data dan hak akses.</div>}
+    <div className="standard-toolbar"><form className="search-form" method="get"><select name="employeeId" defaultValue={employeeId}><option value="">Semua karyawan</option>{employees.map(x => <option key={x.id} value={x.id}>{x.fullName}</option>)}</select><select name="status" defaultValue={status}><option value="">Semua status</option>{statuses.map(x => <option key={x}>{x}</option>)}</select><button>Tampilkan</button></form><div className="toolbar-actions">{canExport && <a href={`/api/leave-requests/export?status=${status}&employeeId=${employeeId}`}>Export Excel</a>}</div></div>
+    {canCreate && <details className="swap-panel"><summary>+ Ajukan Cuti / Izin</summary><form action="/api/leave-requests" method="post"><input type="hidden" name="action" value="CREATE"/><label>Karyawan<select name="employeeId" required><option value="">Pilih karyawan</option>{employees.map(x => <option key={x.id} value={x.id}>{x.employeeNumber} · {x.fullName}</option>)}</select></label><label>Jenis<select name="typeName" required><option value="">Pilih jenis</option>{types.map(x => <option key={x.id} value={x.name}>{x.name}</option>)}</select></label><label>Tanggal mulai<input type="date" name="startDate" required/></label><label>Tanggal selesai<input type="date" name="endDate" required/></label><label>Alasan<input name="reason" maxLength={500}/></label><button>Ajukan</button></form>{types.length === 0 && <p className="form-error">Belum ada Jenis Cuti & Izin aktif. Tambahkan dahulu dari Master Data.</p>}</details>}
+    <div className="leave-list">{records.map(x => <article key={x.id}><div><strong>{x.employee.fullName}</strong><small>{x.employee.employeeNumber} · {x.employee.department?.name ?? "Tanpa departemen"} · {x.employee.position?.name ?? "Tanpa jabatan"}</small></div><div><b>{x.typeName}</b><small>{x.startDate.toISOString().slice(0, 10)} s.d. {x.endDate.toISOString().slice(0, 10)} · {x.totalDays} hari</small></div><span className={`leave-status status-${x.status.toLowerCase()}`}>{x.status}</span><div><small>{x.reason || "Tanpa alasan"}</small>{x.reviewNotes && <small>Review: {x.reviewNotes}</small>}</div><LeaveActions id={x.id} status={x.status} canApprove={canApprove} canEdit={canEdit} canDelete={canDelete}/></article>)}{records.length === 0 && <div className="empty-state">Belum ada pengajuan cuti atau izin.</div>}</div>
+  </section></main>;
+}

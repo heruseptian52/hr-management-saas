@@ -76,39 +76,40 @@ enum AttendanceMethod {
 }
 
 model Company {
-  id              String               @id @default(cuid())
-  code            String               @unique
-  name            String
-  logoUrl         String?
-  primaryColor    String               @default("#2563EB")
-  secondaryColor  String               @default("#0F172A")
-  address         String?
-  email           String?
-  phone           String?
-  timezone        String               @default("Asia/Makassar")
-  currency        String               @default("IDR")
-  defaultLanguage String               @default("id")
-  dateFormat      String               @default("DD/MM/YYYY")
-  status          CompanyStatus        @default(ACTIVE)
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  deletedAt       DateTime?
-  memberships     Membership[]
-  roles           Role[]
-  branches        Branch[]
-  departments     Department[]
-  positions       Position[]
-  employees       Employee[]
-  auditLogs       AuditLog[]
-  shifts          Shift[]
-  schedules       Schedule[]
-  assignments     ScheduleAssignment[]
-  attendances     Attendance[]
-  masterData      MasterData[]
-  importBatches   ImportBatch[]
+  id                      String                   @id @default(cuid())
+  code                    String                   @unique
+  name                    String
+  logoUrl                 String?
+  primaryColor            String                   @default("#2563EB")
+  secondaryColor          String                   @default("#0F172A")
+  address                 String?
+  email                   String?
+  phone                   String?
+  timezone                String                   @default("Asia/Makassar")
+  currency                String                   @default("IDR")
+  defaultLanguage         String                   @default("id")
+  dateFormat              String                   @default("DD/MM/YYYY")
+  status                  CompanyStatus            @default(ACTIVE)
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  deletedAt               DateTime?
+  memberships             Membership[]
+  roles                   Role[]
+  branches                Branch[]
+  departments             Department[]
+  positions               Position[]
+  employees               Employee[]
+  auditLogs               AuditLog[]
+  shifts                  Shift[]
+  schedules               Schedule[]
+  assignments             ScheduleAssignment[]
+  attendances             Attendance[]
+  masterData              MasterData[]
+  importBatches           ImportBatch[]
   departmentScheduleRules DepartmentScheduleRule[]
-  positionScheduleRules PositionScheduleRule[]
-  holidays        Holiday[]
+  positionScheduleRules   PositionScheduleRule[]
+  holidays                Holiday[]
+  leaveRequests           LeaveRequest[]
 
   @@index([status, deletedAt])
 }
@@ -127,6 +128,28 @@ model Holiday {
 
   @@unique([companyId, date, name])
   @@index([companyId, date, isActive])
+}
+
+model LeaveRequest {
+  id           String    @id @default(cuid())
+  companyId    String
+  company      Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  employeeId   String
+  employee     Employee  @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  typeName     String
+  startDate    DateTime
+  endDate      DateTime
+  totalDays    Int
+  reason       String?
+  status       String    @default("PENDING")
+  reviewedById String?
+  reviewNotes  String?
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([companyId, status, startDate])
+  @@index([companyId, employeeId, startDate])
 }
 
 model User {
@@ -201,16 +224,16 @@ model Branch {
 }
 
 model Department {
-  id        String     @id @default(cuid())
-  companyId String
-  company   Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  code      String
-  name      String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  deletedAt DateTime?
-  employees Employee[]
-  shifts    Shift[]
+  id           String                  @id @default(cuid())
+  companyId    String
+  company      Company                 @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  code         String
+  name         String
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  deletedAt    DateTime?
+  employees    Employee[]
+  shifts       Shift[]
   scheduleRule DepartmentScheduleRule?
 
   @@unique([companyId, code])
@@ -233,15 +256,15 @@ model DepartmentScheduleRule {
 }
 
 model Position {
-  id        String     @id @default(cuid())
-  companyId String
-  company   Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  code      String
-  name      String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  deletedAt DateTime?
-  employees Employee[]
+  id           String                @id @default(cuid())
+  companyId    String
+  company      Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  code         String
+  name         String
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  deletedAt    DateTime?
+  employees    Employee[]
   scheduleRule PositionScheduleRule?
 
   @@unique([companyId, code])
@@ -264,92 +287,93 @@ model PositionScheduleRule {
 }
 
 model Employee {
-  id               String               @id @default(cuid())
-  companyId        String
-  company          Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  employeeNumber   String
-  fullName         String
-  email            String?
-  phone            String?
-  additionalPhone  String?
-  address          String?
-  placeOfBirth     String?
-  birthDate        DateTime?
-  gender           String?
-  religion         String?
-  maritalStatus    String?
-  nationalId       String?
-  familyCardNumber String?
-  taxNumber        String?
-  joinDate         DateTime?
-  contractStartDate DateTime?
-  contractEndDate  DateTime?
-  stopDate         DateTime?
-  terminationReason String?
+  id                  String               @id @default(cuid())
+  companyId           String
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  employeeNumber      String
+  fullName            String
+  email               String?
+  phone               String?
+  additionalPhone     String?
+  address             String?
+  placeOfBirth        String?
+  birthDate           DateTime?
+  gender              String?
+  religion            String?
+  maritalStatus       String?
+  nationalId          String?
+  familyCardNumber    String?
+  taxNumber           String?
+  joinDate            DateTime?
+  contractStartDate   DateTime?
+  contractEndDate     DateTime?
+  stopDate            DateTime?
+  terminationReason   String?
   employeeStatusLabel String?
-  bankName         String?
-  bankAccountNumber String?
-  bankAccountHolder String?
-  bpjsHealth       String?
-  bpjsEmployment   String?
-  branchId         String?
-  branch           Branch?              @relation(fields: [branchId], references: [id], onDelete: Restrict)
-  departmentId     String?
-  department       Department?          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  positionId       String?
-  position         Position?            @relation(fields: [positionId], references: [id], onDelete: Restrict)
-  employmentType   EmploymentType?
-  contractTypeLabel String?
-  employmentStatus EmployeeStatus       @default(ACTIVE)
-  monthlyDaysOff   Int                  @default(4)
-  baseSalary       Decimal?             @db.Decimal(18, 2)
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  deletedAt        DateTime?
-  assignments      ScheduleAssignment[]
-  attendances      Attendance[]
-  importBatchId    String?
-  importBatch      ImportBatch?         @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  bankName            String?
+  bankAccountNumber   String?
+  bankAccountHolder   String?
+  bpjsHealth          String?
+  bpjsEmployment      String?
+  branchId            String?
+  branch              Branch?              @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  departmentId        String?
+  department          Department?          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  positionId          String?
+  position            Position?            @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  employmentType      EmploymentType?
+  contractTypeLabel   String?
+  employmentStatus    EmployeeStatus       @default(ACTIVE)
+  monthlyDaysOff      Int                  @default(4)
+  baseSalary          Decimal?             @db.Decimal(18, 2)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  deletedAt           DateTime?
+  assignments         ScheduleAssignment[]
+  attendances         Attendance[]
+  leaveRequests       LeaveRequest[]
+  importBatchId       String?
+  importBatch         ImportBatch?         @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
 
   @@unique([companyId, employeeNumber])
   @@index([companyId, branchId, departmentId, deletedAt])
 }
 
 model MasterData {
-  id          String   @id @default(cuid())
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  category    String
-  code        String
-  name        String
-  color       String?
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
+  id        String    @id @default(cuid())
+  companyId String
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  category  String
+  code      String
+  name      String
+  color     String?
+  sortOrder Int       @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@unique([companyId, category, code])
   @@index([companyId, category, isActive, deletedAt])
 }
 
 model ImportBatch {
-  id          String    @id @default(cuid())
-  companyId   String
-  company     Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  actorUserId String?
-  filename    String
-  dataType    String    @default("EMPLOYEE")
-  totalRows   Int
-  createdRows Int       @default(0)
-  updatedRows Int       @default(0)
-  skippedRows Int       @default(0)
-  warningRows Int       @default(0)
-  errorRows   Int       @default(0)
-  errorData   Json?
-  createdAt   DateTime  @default(now())
+  id           String     @id @default(cuid())
+  companyId    String
+  company      Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  actorUserId  String?
+  filename     String
+  dataType     String     @default("EMPLOYEE")
+  totalRows    Int
+  createdRows  Int        @default(0)
+  updatedRows  Int        @default(0)
+  skippedRows  Int        @default(0)
+  warningRows  Int        @default(0)
+  errorRows    Int        @default(0)
+  errorData    Json?
+  createdAt    DateTime   @default(now())
   rolledBackAt DateTime?
-  employees   Employee[]
+  employees    Employee[]
 
   @@index([companyId, dataType, createdAt])
 }
