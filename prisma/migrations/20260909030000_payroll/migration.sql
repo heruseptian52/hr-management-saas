@@ -1,5 +1,7 @@
 CREATE TABLE IF NOT EXISTS "PayrollPeriod" ("id" TEXT NOT NULL,"companyId" TEXT NOT NULL,"name" TEXT NOT NULL,"year" INTEGER NOT NULL,"month" INTEGER NOT NULL,"status" TEXT NOT NULL DEFAULT 'DRAFT',"paymentDate" TIMESTAMP(3),"finalizedAt" TIMESTAMP(3),"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,"updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,CONSTRAINT "PayrollPeriod_pkey" PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "PayrollItem" ("id" TEXT NOT NULL,"companyId" TEXT NOT NULL,"payrollPeriodId" TEXT NOT NULL,"employeeId" TEXT NOT NULL,"baseSalary" DECIMAL(18,2) NOT NULL DEFAULT 0,"allowance" DECIMAL(18,2) NOT NULL DEFAULT 0,"overtimePay" DECIMAL(18,2) NOT NULL DEFAULT 0,"bonus" DECIMAL(18,2) NOT NULL DEFAULT 0,"deduction" DECIMAL(18,2) NOT NULL DEFAULT 0,"netSalary" DECIMAL(18,2) NOT NULL DEFAULT 0,"notes" TEXT,"createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,"updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,CONSTRAINT "PayrollItem_pkey" PRIMARY KEY ("id"));
+ALTER TABLE "PayrollItem" ADD COLUMN IF NOT EXISTS "earningDetails" JSONB;
+ALTER TABLE "PayrollItem" ADD COLUMN IF NOT EXISTS "deductionDetails" JSONB;
 CREATE UNIQUE INDEX IF NOT EXISTS "PayrollPeriod_companyId_year_month_key" ON "PayrollPeriod"("companyId","year","month");
 CREATE INDEX IF NOT EXISTS "PayrollPeriod_companyId_status_year_month_idx" ON "PayrollPeriod"("companyId","status","year","month");
 CREATE UNIQUE INDEX IF NOT EXISTS "PayrollItem_payrollPeriodId_employeeId_key" ON "PayrollItem"("payrollPeriodId","employeeId");

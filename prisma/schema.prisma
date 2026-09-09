@@ -197,22 +197,24 @@ model PayrollPeriod {
 }
 
 model PayrollItem {
-  id              String        @id @default(cuid())
-  companyId       String
-  company         Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  payrollPeriodId String
-  payrollPeriod   PayrollPeriod @relation(fields: [payrollPeriodId], references: [id], onDelete: Cascade)
-  employeeId      String
-  employee        Employee      @relation(fields: [employeeId], references: [id], onDelete: Restrict)
-  baseSalary      Decimal       @default(0) @db.Decimal(18, 2)
-  allowance       Decimal       @default(0) @db.Decimal(18, 2)
-  overtimePay     Decimal       @default(0) @db.Decimal(18, 2)
-  bonus           Decimal       @default(0) @db.Decimal(18, 2)
-  deduction       Decimal       @default(0) @db.Decimal(18, 2)
-  netSalary       Decimal       @default(0) @db.Decimal(18, 2)
-  notes           String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id               String        @id @default(cuid())
+  companyId        String
+  company          Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  payrollPeriodId  String
+  payrollPeriod    PayrollPeriod @relation(fields: [payrollPeriodId], references: [id], onDelete: Cascade)
+  employeeId       String
+  employee         Employee      @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  baseSalary       Decimal       @default(0) @db.Decimal(18, 2)
+  allowance        Decimal       @default(0) @db.Decimal(18, 2)
+  overtimePay      Decimal       @default(0) @db.Decimal(18, 2)
+  bonus            Decimal       @default(0) @db.Decimal(18, 2)
+  deduction        Decimal       @default(0) @db.Decimal(18, 2)
+  earningDetails   Json?
+  deductionDetails Json?
+  netSalary        Decimal       @default(0) @db.Decimal(18, 2)
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   @@unique([payrollPeriodId, employeeId])
   @@index([companyId, employeeId, payrollPeriodId])
