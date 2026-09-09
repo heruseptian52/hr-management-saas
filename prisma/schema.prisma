@@ -110,6 +110,7 @@ model Company {
   positionScheduleRules   PositionScheduleRule[]
   holidays                Holiday[]
   leaveRequests           LeaveRequest[]
+  overtimeRequests        OvertimeRequest[]
 
   @@index([status, deletedAt])
 }
@@ -150,6 +151,29 @@ model LeaveRequest {
 
   @@index([companyId, status, startDate])
   @@index([companyId, employeeId, startDate])
+}
+
+model OvertimeRequest {
+  id           String    @id @default(cuid())
+  companyId    String
+  company      Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  employeeId   String
+  employee     Employee  @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  typeName     String
+  workDate     DateTime
+  startTime    String
+  endTime      String
+  totalMinutes Int
+  reason       String?
+  status       String    @default("PENDING")
+  reviewedById String?
+  reviewNotes  String?
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([companyId, status, workDate])
+  @@index([companyId, employeeId, workDate])
 }
 
 model User {
@@ -332,6 +356,7 @@ model Employee {
   assignments         ScheduleAssignment[]
   attendances         Attendance[]
   leaveRequests       LeaveRequest[]
+  overtimeRequests    OvertimeRequest[]
   importBatchId       String?
   importBatch         ImportBatch?         @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
 
