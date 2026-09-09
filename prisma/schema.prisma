@@ -113,6 +113,8 @@ model Company {
   overtimeRequests        OvertimeRequest[]
   payrollPeriods          PayrollPeriod[]
   payrollItems            PayrollItem[]
+  kpiReviews              KpiReview[]
+  assets                  Asset[]
 
   @@index([status, deletedAt])
 }
@@ -218,6 +220,49 @@ model PayrollItem {
 
   @@unique([payrollPeriodId, employeeId])
   @@index([companyId, employeeId, payrollPeriodId])
+}
+
+model KpiReview {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  periodLabel String
+  reviewDate  DateTime
+  score       Int
+  target      String?
+  achievement String?
+  notes       String?
+  status      String   @default("DRAFT")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, employeeId, periodLabel])
+  @@index([companyId, reviewDate, status])
+}
+
+model Asset {
+  id           String    @id @default(cuid())
+  companyId    String
+  company      Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  code         String
+  name         String
+  category     String
+  serialNumber String?
+  employeeId   String?
+  employee     Employee? @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  assignedAt   DateTime?
+  returnedAt   DateTime?
+  condition    String    @default("BAIK")
+  status       String    @default("AVAILABLE")
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  @@unique([companyId, code])
+  @@index([companyId, status, employeeId, deletedAt])
 }
 
 model User {
@@ -402,6 +447,8 @@ model Employee {
   leaveRequests       LeaveRequest[]
   overtimeRequests    OvertimeRequest[]
   payrollItems        PayrollItem[]
+  kpiReviews          KpiReview[]
+  assets              Asset[]
   importBatchId       String?
   importBatch         ImportBatch?         @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
 

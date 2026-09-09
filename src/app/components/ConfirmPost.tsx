@@ -1,0 +1,2 @@
+"use client";
+export function ConfirmPost({url,action,id,label,message,className="",fields={}}:{url:string;action:string;id:string;label:string;message:string;className?:string;fields?:Record<string,string>}){return <form action={url} method="post" onSubmit={e=>{if(!confirm(message))e.preventDefault()}}><input type="hidden" name="action" value={action}/><input type="hidden" name="id" value={id}/>{Object.entries(fields).map(([k,v])=><input key={k} type="hidden" name={k} value={v}/>) }<button className={className}>{label}</button></form>}
