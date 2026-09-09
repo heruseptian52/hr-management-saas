@@ -26,5 +26,6 @@ export const ownerPermissions: PermissionMap = {
   payroll: [...actions],
   kpi: [...actions],
   assets: [...actions],
+  announcements: [...actions],
   audit: ["view", "export"],
 };

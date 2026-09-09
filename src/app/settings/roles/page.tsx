@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { actions, hasPermission } from "@/lib/permissions";
 import { redirect } from "next/navigation";
 
-const modules = [{ key: "company", name: "Perusahaan" }, { key: "roles", name: "Role & akses" }, { key: "employees", name: "Karyawan" }, { key: "branches", name: "Cabang" }, { key: "departments", name: "Departemen" }, { key: "positions", name: "Jabatan" }, { key: "master_data", name: "Master Data" }, { key: "shifts", name: "Shift" }, { key: "schedules", name: "Jadwal" }, { key: "attendance", name: "Absensi" }, { key: "payroll", name: "Payroll" }, { key: "kpi", name: "KPI" }, { key: "assets", name: "Aset" }, { key: "audit", name: "Audit" }];
+const modules = [{ key: "company", name: "Perusahaan" }, { key: "roles", name: "Role & akses" }, { key: "employees", name: "Karyawan" }, { key: "branches", name: "Cabang" }, { key: "departments", name: "Departemen" }, { key: "positions", name: "Jabatan" }, { key: "master_data", name: "Master Data" }, { key: "shifts", name: "Shift" }, { key: "schedules", name: "Jadwal" }, { key: "attendance", name: "Absensi" }, { key: "payroll", name: "Payroll" }, { key: "kpi", name: "KPI" }, { key: "assets", name: "Aset" }, { key: "announcements", name: "Pengumuman" }, { key: "audit", name: "Audit" }];
 
 export default async function RolesPage({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
   let tenant;

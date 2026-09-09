@@ -1,0 +1,2 @@
+import { appUrl } from "@/lib/app-url";import { requireTenant } from "@/lib/tenant";import { db } from "@/lib/db";import { NextRequest,NextResponse } from "next/server";
+export async function POST(req:NextRequest){try{const t=await requireTenant();await db.notification.updateMany({where:{companyId:t.companyId,userId:t.session.userId,readAt:null},data:{readAt:new Date()}});return NextResponse.redirect(new URL("/self-service?read=1",appUrl(req)),303);}catch{return NextResponse.redirect(new URL("/dashboard",appUrl(req)),303)}}

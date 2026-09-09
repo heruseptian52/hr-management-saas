@@ -115,6 +115,8 @@ model Company {
   payrollItems            PayrollItem[]
   kpiReviews              KpiReview[]
   assets                  Asset[]
+  announcements           Announcement[]
+  notifications           Notification[]
 
   @@index([status, deletedAt])
 }
@@ -265,21 +267,55 @@ model Asset {
   @@index([companyId, status, employeeId, deletedAt])
 }
 
+model Announcement {
+  id          String    @id @default(cuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  title       String
+  content     String
+  priority    String    @default("NORMAL")
+  status      String    @default("DRAFT")
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId, status, publishedAt])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  companyId String
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  title     String
+  message   String
+  type      String    @default("INFO")
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([companyId, userId, readAt, createdAt])
+}
+
 model User {
-  id           String         @id @default(cuid())
-  email        String         @unique
-  passwordHash String
-  fullName     String
-  platformRole PlatformRole   @default(COMPANY_USER)
-  isActive     Boolean        @default(true)
-  locale       String         @default("id")
-  lastLoginAt  DateTime?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  deletedAt    DateTime?
-  memberships  Membership[]
-  loginHistory LoginHistory[]
-  auditLogs    AuditLog[]     @relation("AuditActor")
+  id            String         @id @default(cuid())
+  email         String         @unique
+  passwordHash  String
+  fullName      String
+  platformRole  PlatformRole   @default(COMPANY_USER)
+  isActive      Boolean        @default(true)
+  locale        String         @default("id")
+  lastLoginAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+  memberships   Membership[]
+  loginHistory  LoginHistory[]
+  auditLogs     AuditLog[]     @relation("AuditActor")
+  notifications Notification[]
 }
 
 model Role {
