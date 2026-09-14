@@ -556,22 +556,23 @@ model MasterData {
 }
 
 model ImportBatch {
-  id           String     @id @default(cuid())
+  id           String       @id @default(cuid())
   companyId    String
-  company      Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company      Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
   actorUserId  String?
   filename     String
-  dataType     String     @default("EMPLOYEE")
+  dataType     String       @default("EMPLOYEE")
   totalRows    Int
-  createdRows  Int        @default(0)
-  updatedRows  Int        @default(0)
-  skippedRows  Int        @default(0)
-  warningRows  Int        @default(0)
-  errorRows    Int        @default(0)
+  createdRows  Int          @default(0)
+  updatedRows  Int          @default(0)
+  skippedRows  Int          @default(0)
+  warningRows  Int          @default(0)
+  errorRows    Int          @default(0)
   errorData    Json?
-  createdAt    DateTime   @default(now())
+  createdAt    DateTime     @default(now())
   rolledBackAt DateTime?
   employees    Employee[]
+  attendances  Attendance[]
 
   @@index([companyId, dataType, createdAt])
 }
@@ -679,12 +680,15 @@ model Attendance {
   lateMinutes     Int              @default(0)
   overtimeMinutes Int              @default(0)
   notes           String?
+  importBatchId   String?
+  importBatch     ImportBatch?     @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
   @@unique([companyId, employeeId, workDate])
   @@index([companyId, workDate, status])
   @@index([companyId, branchId, workDate])
+  @@index([companyId, importBatchId])
 }
 
 model LoginHistory {
