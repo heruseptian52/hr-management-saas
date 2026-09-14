@@ -1,0 +1,22 @@
+import { requirePermission } from "@/lib/authorization";
+import { db } from "@/lib/db";
+import { hasPermission } from "@/lib/permissions";
+import { redirect } from "next/navigation";
+
+export default async function LeaveBalancesPage({ searchParams }: { searchParams: Promise<{ year?: string; employeeId?: string; saved?: string; error?: string }> }) {
+  let tenant; try { tenant = await requirePermission("attendance", "view"); } catch { redirect("/dashboard"); }
+  const query = await searchParams, currentYear = new Date().getUTCFullYear(), requested = Number(query.year), year = Number.isInteger(requested) && requested >= 2000 && requested <= 2100 ? requested : currentYear, employeeId = query.employeeId ?? "";
+  const [employees, types, balances, approved] = await Promise.all([
+    db.employee.findMany({ where: { companyId: tenant.companyId, deletedAt: null, employmentStatus: "ACTIVE" }, select: { id: true, employeeNumber: true, fullName: true }, orderBy: { fullName: "asc" } }),
+    db.masterData.findMany({ where: { companyId: tenant.companyId, category: "LEAVE_TYPE", isActive: true, deletedAt: null }, select: { name: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
+    db.leaveBalance.findMany({ where: { companyId: tenant.companyId, year, ...(employeeId ? { employeeId } : {}) }, include: { employee: { select: { employeeNumber: true, fullName: true } } }, orderBy: [{ employee: { fullName: "asc" } }, { typeName: "asc" }] }),
+    db.leaveRequest.groupBy({ by: ["employeeId", "typeName"], where: { companyId: tenant.companyId, status: "APPROVED", startDate: { gte: new Date(Date.UTC(year, 0, 1)), lt: new Date(Date.UTC(year + 1, 0, 1)) }, ...(employeeId ? { employeeId } : {}) }, _sum: { totalDays: true } }),
+  ]);
+  const used = new Map(approved.map(x => [`${x.employeeId}:${x.typeName.toLowerCase()}`, x._sum.totalDays ?? 0])), editable = hasPermission(tenant.membership.role.permissions, "attendance", "edit");
+  return <main className="settings-page"><section className="settings-card"><header><div><span className="eyebrow">PANBOY HR</span><h1>Jatah Cuti Karyawan</h1><p>Saldo tahunan {tenant.membership.company.name}.</p></div><a href="/leave-requests">Cuti & Izin</a></header>
+    {query.saved && <div className="form-success">Jatah cuti berhasil disimpan.</div>}{query.error && <div className="form-error">Jatah cuti gagal disimpan.</div>}
+    <form className="search-form" method="get"><input name="year" type="number" min="2000" max="2100" defaultValue={year}/><select name="employeeId" defaultValue={employeeId}><option value="">Semua karyawan</option>{employees.map(x => <option key={x.id} value={x.id}>{x.fullName}</option>)}</select><button>Tampilkan</button></form>
+    {editable && <details className="swap-panel" open={!balances.length}><summary>+ Atur / Perbarui Jatah</summary><form action="/api/leave-balances" method="post"><label>Karyawan<select name="employeeId" required><option value="">Pilih karyawan</option>{employees.map(x => <option key={x.id} value={x.id}>{x.employeeNumber} · {x.fullName}</option>)}</select></label><label>Jenis cuti<select name="typeName" required><option value="">Pilih jenis</option>{types.map(x => <option key={x.name}>{x.name}</option>)}</select></label><label>Tahun<input name="year" type="number" min="2000" max="2100" defaultValue={year} required/></label><label>Jatah tahunan<input name="entitledDays" type="number" min="0" max="366" defaultValue="12" required/></label><label>Sisa dibawa<input name="carriedDays" type="number" min="0" max="366" defaultValue="0" required/></label><label>Catatan<input name="notes" maxLength={300}/></label><button>Simpan Jatah</button></form>{!types.length && <p className="form-error">Tambahkan Jenis Cuti & Izin di Master Data dahulu.</p>}</details>}
+    <div className="leave-balance-table"><div className="table-head"><b>Karyawan</b><b>Jenis</b><b>Jatah</b><b>Terpakai</b><b>Sisa</b></div>{balances.map(x => { const usage=used.get(`${x.employeeId}:${x.typeName.toLowerCase()}`)??0,total=x.entitledDays+x.carriedDays; return <article key={x.id}><span><b>{x.employee.fullName}</b><small>{x.employee.employeeNumber}</small></span><span>{x.typeName}<small>{x.year}</small></span><b>{total}</b><b>{usage}</b><b className={total-usage<0?"balance-negative":""}>{total-usage}</b></article>; })}{!balances.length && <div className="empty-state">Belum ada jatah cuti untuk filter ini.</div>}</div>
+  </section></main>;
+}

@@ -33,6 +33,13 @@ export async function POST(request: NextRequest) {
     } else {
       const item = await db.leaveRequest.findFirstOrThrow({ where: { id: parsed.id, companyId: tenant.companyId } });
       if (["APPROVE", "REJECT"].includes(parsed.action) && item.status !== "PENDING") throw new Error("STATUS");
+      if (parsed.action === "APPROVE") {
+        const year = item.startDate.getUTCFullYear(), balance = await db.leaveBalance.findUnique({ where: { companyId_employeeId_typeName_year: { companyId: tenant.companyId, employeeId: item.employeeId, typeName: item.typeName, year } } });
+        if (balance) {
+          const used = await db.leaveRequest.aggregate({ where: { companyId: tenant.companyId, employeeId: item.employeeId, typeName: item.typeName, status: "APPROVED", startDate: { gte: new Date(Date.UTC(year, 0, 1)), lt: new Date(Date.UTC(year + 1, 0, 1)) }, id: { not: item.id } }, _sum: { totalDays: true } });
+          if ((used._sum.totalDays ?? 0) + item.totalDays > balance.entitledDays + balance.carriedDays) return NextResponse.redirect(new URL("/leave-requests?error=balance", appUrl(request)), 303);
+        }
+      }
       const nextStatus = parsed.action === "APPROVE" ? "APPROVED" : parsed.action === "REJECT" ? "REJECTED" : parsed.action === "CANCEL" ? "CANCELLED" : null;
       if (parsed.action === "DELETE") await db.leaveRequest.delete({ where: { id: item.id } });
       else await db.leaveRequest.update({ where: { id: item.id }, data: { status: nextStatus!, reviewedById: tenant.session.userId, reviewNotes: parsed.reviewNotes || null, reviewedAt: new Date() } });
