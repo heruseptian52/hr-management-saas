@@ -125,6 +125,8 @@ model Company {
   onboardingTasks         OnboardingTask[]
   trainingPrograms        TrainingProgram[]
   trainingParticipants    TrainingParticipant[]
+  disciplinaryCases       DisciplinaryCase[]
+  disciplinaryDocuments   DisciplinaryDocument[]
 
   @@index([status, deletedAt])
 }
@@ -541,9 +543,55 @@ model Employee {
   recruitedCandidate Candidate?
   onboardingTasks    OnboardingTask[]
   trainingParticipants TrainingParticipant[]
+  disciplinaryCases    DisciplinaryCase[]
 
   @@unique([companyId, employeeNumber])
   @@index([companyId, branchId, departmentId, deletedAt])
+}
+
+model DisciplinaryCase {
+  id             String                  @id @default(cuid())
+  companyId      String
+  company        Company                 @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  employeeId     String
+  employee       Employee                @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  caseNumber     String
+  incidentDate   DateTime
+  category       String
+  severity       String                  @default("WARNING")
+  title          String
+  description    String
+  actionTaken    String?
+  status         String                  @default("OPEN")
+  validUntil     DateTime?
+  resolvedAt     DateTime?
+  resolution     String?
+  createdById    String
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  deletedAt      DateTime?
+  documents      DisciplinaryDocument[]
+
+  @@unique([companyId, caseNumber])
+  @@index([companyId, employeeId, status, incidentDate, deletedAt])
+}
+
+model DisciplinaryDocument {
+  id                 String           @id @default(cuid())
+  companyId          String
+  company            Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  disciplinaryCaseId String
+  disciplinaryCase   DisciplinaryCase @relation(fields: [disciplinaryCaseId], references: [id], onDelete: Restrict)
+  title              String
+  fileName           String
+  mimeType           String
+  fileSize           Int
+  fileData           Bytes
+  uploadedById       String
+  createdAt          DateTime         @default(now())
+  deletedAt          DateTime?
+
+  @@index([companyId, disciplinaryCaseId, deletedAt])
 }
 
 model TrainingProgram {
