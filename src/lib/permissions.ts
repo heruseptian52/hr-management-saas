@@ -27,5 +27,6 @@ export const ownerPermissions: PermissionMap = {
   kpi: [...actions],
   assets: [...actions],
   announcements: [...actions],
+  recruitment: [...actions],
   audit: ["view", "export"],
 };

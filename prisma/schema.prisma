@@ -119,6 +119,10 @@ model Company {
   notifications           Notification[]
   employeeDocuments       EmployeeDocument[]
   leaveBalances           LeaveBalance[]
+  jobVacancies            JobVacancy[]
+  candidates              Candidate[]
+  candidateDocuments      CandidateDocument[]
+  onboardingTasks         OnboardingTask[]
 
   @@index([status, deletedAt])
 }
@@ -532,9 +536,99 @@ model Employee {
   leaveBalances       LeaveBalance[]
   importBatchId       String?
   importBatch         ImportBatch?         @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  recruitedCandidate Candidate?
+  onboardingTasks    OnboardingTask[]
 
   @@unique([companyId, employeeNumber])
   @@index([companyId, branchId, departmentId, deletedAt])
+}
+
+model JobVacancy {
+  id           String      @id @default(cuid())
+  companyId    String
+  company      Company     @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  code         String
+  title        String
+  departmentId String?
+  positionId   String?
+  openings     Int         @default(1)
+  description  String?
+  status       String      @default("DRAFT")
+  deadline     DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
+  candidates   Candidate[]
+
+  @@unique([companyId, code])
+  @@index([companyId, status, deletedAt])
+}
+
+model Candidate {
+  id          String              @id @default(cuid())
+  companyId   String
+  company     Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  vacancyId   String?
+  vacancy     JobVacancy?         @relation(fields: [vacancyId], references: [id], onDelete: SetNull)
+  fullName    String
+  email       String?
+  phone       String?
+  nationalId  String?
+  birthDate   DateTime?
+  address     String?
+  source      String?
+  stage       String              @default("APPLIED")
+  notes       String?
+  employeeId  String?             @unique
+  employee    Employee?           @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  deletedAt   DateTime?
+  documents   CandidateDocument[]
+  tasks       OnboardingTask[]
+
+  @@index([companyId, stage, deletedAt])
+  @@index([companyId, vacancyId, deletedAt])
+}
+
+model CandidateDocument {
+  id           String    @id @default(cuid())
+  companyId    String
+  company      Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  candidateId  String
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  title        String
+  fileName     String
+  mimeType     String
+  fileSize     Int
+  fileData     Bytes
+  uploadedById String
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
+
+  @@index([companyId, candidateId, deletedAt])
+}
+
+model OnboardingTask {
+  id            String     @id @default(cuid())
+  companyId     String
+  company       Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  candidateId   String
+  candidate     Candidate  @relation(fields: [candidateId], references: [id], onDelete: Restrict)
+  employeeId    String?
+  employee      Employee?  @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  title         String
+  dueDate       DateTime?
+  status        String     @default("PENDING")
+  notes         String?
+  completedAt   DateTime?
+  completedById String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  deletedAt     DateTime?
+
+  @@index([companyId, candidateId, status, deletedAt])
+  @@index([companyId, employeeId, status, deletedAt])
 }
 
 model MasterData {
