@@ -123,6 +123,8 @@ model Company {
   candidates              Candidate[]
   candidateDocuments      CandidateDocument[]
   onboardingTasks         OnboardingTask[]
+  trainingPrograms        TrainingProgram[]
+  trainingParticipants    TrainingParticipant[]
 
   @@index([status, deletedAt])
 }
@@ -538,9 +540,56 @@ model Employee {
   importBatch         ImportBatch?         @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
   recruitedCandidate Candidate?
   onboardingTasks    OnboardingTask[]
+  trainingParticipants TrainingParticipant[]
 
   @@unique([companyId, employeeNumber])
   @@index([companyId, branchId, departmentId, deletedAt])
+}
+
+model TrainingProgram {
+  id           String                @id @default(cuid())
+  companyId    String
+  company      Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  code         String
+  name         String
+  category     String?
+  provider     String?
+  location     String?
+  startDate    DateTime
+  endDate      DateTime
+  capacity     Int?
+  cost         Decimal?              @db.Decimal(18, 2)
+  status       String                @default("DRAFT")
+  description  String?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  deletedAt    DateTime?
+  participants TrainingParticipant[]
+
+  @@unique([companyId, code])
+  @@index([companyId, status, startDate, deletedAt])
+}
+
+model TrainingParticipant {
+  id                String          @id @default(cuid())
+  companyId         String
+  company           Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  trainingProgramId String
+  trainingProgram   TrainingProgram @relation(fields: [trainingProgramId], references: [id], onDelete: Restrict)
+  employeeId        String
+  employee          Employee        @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  attendanceStatus  String          @default("REGISTERED")
+  completionStatus  String          @default("PENDING")
+  score             Int?
+  certificateNumber String?
+  certificateUrl    String?
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?
+
+  @@unique([trainingProgramId, employeeId])
+  @@index([companyId, employeeId, completionStatus, deletedAt])
 }
 
 model JobVacancy {

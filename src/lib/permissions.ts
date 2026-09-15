@@ -28,5 +28,6 @@ export const ownerPermissions: PermissionMap = {
   assets: [...actions],
   announcements: [...actions],
   recruitment: [...actions],
+  training: [...actions],
   audit: ["view", "export"],
 };
