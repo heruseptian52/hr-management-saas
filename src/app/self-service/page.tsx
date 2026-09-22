@@ -4,22 +4,34 @@ import { redirect } from "next/navigation";
 
 export default async function SelfServicePage() {
   let tenant; try { tenant = await requireTenant(); } catch { redirect("/login"); }
-  const user = await db.user.findUniqueOrThrow({ where: { id: tenant.session.userId } });
+  const user = await db.user.findUnique({ where: { id: tenant.session.userId } });
+  if (!user) redirect("/login");
   const employee = await db.employee.findFirst({ where: { companyId: tenant.companyId, email: { equals: user.email, mode: "insensitive" }, deletedAt: null }, include: { branch: true, department: true, position: true } });
   const now = new Date(), monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)), monthEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
-  const [announcements, notifications] = await Promise.all([
+  const communicationResults = await Promise.allSettled([
     db.announcement.findMany({ where: { companyId: tenant.companyId, status: "PUBLISHED", OR: [{ expiresAt: null }, { expiresAt: { gte: now } }] }, orderBy: [{ priority: "desc" }, { publishedAt: "desc" }], take: 20 }),
     db.notification.findMany({ where: { companyId: tenant.companyId, userId: user.id }, orderBy: { createdAt: "desc" }, take: 20 }),
   ]);
-  const personal = employee ? await Promise.all([
+  const announcements = communicationResults[0].status === "fulfilled" ? communicationResults[0].value : [];
+  const notifications = communicationResults[1].status === "fulfilled" ? communicationResults[1].value : [];
+  const personalResults = employee ? await Promise.allSettled([
     db.scheduleAssignment.findMany({ where: { companyId: tenant.companyId, employeeId: employee.id, date: { gte: monthStart, lt: monthEnd } }, include: { shift: true }, orderBy: { date: "asc" } }),
     db.attendance.findMany({ where: { companyId: tenant.companyId, employeeId: employee.id }, orderBy: { workDate: "desc" }, take: 10 }),
     db.leaveRequest.findMany({ where: { companyId: tenant.companyId, employeeId: employee.id }, orderBy: { createdAt: "desc" }, take: 8 }),
     db.overtimeRequest.findMany({ where: { companyId: tenant.companyId, employeeId: employee.id }, orderBy: { createdAt: "desc" }, take: 8 }),
     db.payrollItem.findMany({ where: { companyId: tenant.companyId, employeeId: employee.id, payrollPeriod: { status: { in: ["FINALIZED", "PAID"] } } }, include: { payrollPeriod: true }, orderBy: { payrollPeriod: { year: "desc" } }, take: 12 }),
     db.trainingParticipant.findMany({ where: { companyId: tenant.companyId, employeeId: employee.id, deletedAt: null }, include: { trainingProgram: true }, orderBy: { trainingProgram: { startDate: "desc" } }, take: 12 }),
-  ]) : [[], [], [], [], [], []] as const;
-  const [schedule, attendance, leaves, overtime, payslips, trainings] = personal;
+  ]) : null;
+  const settledValue = <T,>(index: number): T[] => {
+    const result = personalResults?.[index];
+    return result?.status === "fulfilled" ? result.value as T[] : [];
+  };
+  const schedule = settledValue<Awaited<ReturnType<typeof db.scheduleAssignment.findMany>>[number] & { shift: { name: string } | null }>(0);
+  const attendance = settledValue<Awaited<ReturnType<typeof db.attendance.findMany>>[number]>(1);
+  const leaves = settledValue<Awaited<ReturnType<typeof db.leaveRequest.findMany>>[number]>(2);
+  const overtime = settledValue<Awaited<ReturnType<typeof db.overtimeRequest.findMany>>[number]>(3);
+  const payslips = settledValue<Awaited<ReturnType<typeof db.payrollItem.findMany>>[number] & { payrollPeriod: { id: string; name: string; status: string } }>(4);
+  const trainings = settledValue<Awaited<ReturnType<typeof db.trainingParticipant.findMany>>[number] & { trainingProgram: { name: string; startDate: Date } }>(5);
   return <main className="settings-page"><section className="settings-card ess-card">
     <header><div><span className="eyebrow">EMPLOYEE SELF SERVICE</span><h1>Portal Saya</h1><p>{user.fullName} · {tenant.membership.company.name}</p></div><a href="/dashboard">Kembali</a></header>
     {!employee && <div className="form-error">Akun belum terhubung ke data karyawan. Samakan email akun ({user.email}) dengan email pada Data Karyawan.</div>}
