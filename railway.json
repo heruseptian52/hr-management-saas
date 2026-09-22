@@ -6,7 +6,7 @@
   },
   "deploy": {
     "preDeployCommand": "npx prisma db execute --file prisma/production-schema-sync.sql --schema prisma/schema.prisma",
-    "startCommand": "npm start",
+    "startCommand": "npx prisma db execute --file prisma/production-schema-sync.sql --schema prisma/schema.prisma && npm start",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE",
