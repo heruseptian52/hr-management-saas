@@ -201,3 +201,145 @@ CREATE INDEX IF NOT EXISTS "Notification_companyId_userId_readAt_createdAt_idx" 
 DO $$ BEGIN ALTER TABLE "Announcement" ADD CONSTRAINT "Announcement_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE "Notification" ADD CONSTRAINT "Notification_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- Tables added after the original production bootstrap. All statements are
+-- additive and idempotent so Railway can safely run this file on every deploy.
+CREATE TABLE IF NOT EXISTS "LeaveBalance" (
+  "id" TEXT NOT NULL, "companyId" TEXT NOT NULL, "employeeId" TEXT NOT NULL,
+  "typeName" TEXT NOT NULL, "year" INTEGER NOT NULL,
+  "entitledDays" INTEGER NOT NULL DEFAULT 0, "carriedDays" INTEGER NOT NULL DEFAULT 0,
+  "notes" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "LeaveBalance_pkey" PRIMARY KEY ("id")
+);
+CREATE TABLE IF NOT EXISTS "EmployeeDocument" (
+  "id" TEXT NOT NULL, "companyId" TEXT NOT NULL, "employeeId" TEXT NOT NULL,
+  "category" TEXT NOT NULL, "title" TEXT NOT NULL, "fileName" TEXT NOT NULL,
+  "mimeType" TEXT NOT NULL, "fileSize" INTEGER NOT NULL, "fileData" BYTEA NOT NULL,
+  "expiresAt" TIMESTAMP(3), "notes" TEXT, "uploadedById" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL, "deletedAt" TIMESTAMP(3),
+  CONSTRAINT "EmployeeDocument_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "LeaveBalance_companyId_employeeId_typeName_year_key" ON "LeaveBalance"("companyId", "employeeId", "typeName", "year");
+CREATE INDEX IF NOT EXISTS "LeaveBalance_companyId_year_typeName_idx" ON "LeaveBalance"("companyId", "year", "typeName");
+CREATE INDEX IF NOT EXISTS "EmployeeDocument_companyId_employeeId_deletedAt_idx" ON "EmployeeDocument"("companyId", "employeeId", "deletedAt");
+CREATE INDEX IF NOT EXISTS "EmployeeDocument_companyId_expiresAt_deletedAt_idx" ON "EmployeeDocument"("companyId", "expiresAt", "deletedAt");
+DO $$ BEGIN ALTER TABLE "LeaveBalance" ADD CONSTRAINT "LeaveBalance_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "LeaveBalance" ADD CONSTRAINT "LeaveBalance_employeeId_fkey" FOREIGN KEY ("employeeId") REFERENCES "Employee"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "EmployeeDocument" ADD CONSTRAINT "EmployeeDocument_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "EmployeeDocument" ADD CONSTRAINT "EmployeeDocument_employeeId_fkey" FOREIGN KEY ("employeeId") REFERENCES "Employee"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+ALTER TABLE "Attendance" ADD COLUMN IF NOT EXISTS "importBatchId" TEXT;
+CREATE INDEX IF NOT EXISTS "Attendance_companyId_importBatchId_idx" ON "Attendance"("companyId", "importBatchId");
+DO $$ BEGIN ALTER TABLE "Attendance" ADD CONSTRAINT "Attendance_importBatchId_fkey" FOREIGN KEY ("importBatchId") REFERENCES "ImportBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS "JobVacancy" (
+  "id" TEXT NOT NULL, "companyId" TEXT NOT NULL, "code" TEXT NOT NULL,
+  "title" TEXT NOT NULL, "departmentId" TEXT, "positionId" TEXT,
+  "openings" INTEGER NOT NULL DEFAULT 1, "description" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'DRAFT', "deadline" TIMESTAMP(3),
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL, "deletedAt" TIMESTAMP(3),
+  CONSTRAINT "JobVacancy_pkey" PRIMARY KEY ("id")
+);
+CREATE TABLE IF NOT EXISTS "Candidate" (
+  "id" TEXT NOT NULL, "companyId" TEXT NOT NULL, "vacancyId" TEXT,
+  "fullName" TEXT NOT NULL, "email" TEXT, "phone" TEXT, "nationalId" TEXT,
+  "birthDate" TIMESTAMP(3), "address" TEXT, "source" TEXT,
+  "stage" TEXT NOT NULL DEFAULT 'APPLIED', "notes" TEXT, "employeeId" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL, "deletedAt" TIMESTAMP(3),
+  CONSTRAINT "Candidate_pkey" PRIMARY KEY ("id")
+);
+CREATE TABLE IF NOT EXISTS "CandidateDocument" (
+  "id" TEXT NOT NULL, "companyId" TEXT NOT NULL, "candidateId" TEXT NOT NULL,
+  "title" TEXT NOT NULL, "fileName" TEXT NOT NULL, "mimeType" TEXT NOT NULL,
+  "fileSize" INTEGER NOT NULL, "fileData" BYTEA NOT NULL, "uploadedById" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "deletedAt" TIMESTAMP(3),
+  CONSTRAINT "CandidateDocument_pkey" PRIMARY KEY ("id")
+);
+CREATE TABLE IF NOT EXISTS "OnboardingTask" (
+  "id" TEXT NOT NULL, "companyId" TEXT NOT NULL, "candidateId" TEXT NOT NULL,
+  "employeeId" TEXT, "title" TEXT NOT NULL, "dueDate" TIMESTAMP(3),
+  "status" TEXT NOT NULL DEFAULT 'PENDING', "notes" TEXT,
+  "completedAt" TIMESTAMP(3), "completedById" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL, "deletedAt" TIMESTAMP(3),
+  CONSTRAINT "OnboardingTask_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "JobVacancy_companyId_code_key" ON "JobVacancy"("companyId", "code");
+CREATE INDEX IF NOT EXISTS "JobVacancy_companyId_status_deletedAt_idx" ON "JobVacancy"("companyId", "status", "deletedAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "Candidate_employeeId_key" ON "Candidate"("employeeId");
+CREATE INDEX IF NOT EXISTS "Candidate_companyId_stage_deletedAt_idx" ON "Candidate"("companyId", "stage", "deletedAt");
+CREATE INDEX IF NOT EXISTS "Candidate_companyId_vacancyId_deletedAt_idx" ON "Candidate"("companyId", "vacancyId", "deletedAt");
+CREATE INDEX IF NOT EXISTS "CandidateDocument_companyId_candidateId_deletedAt_idx" ON "CandidateDocument"("companyId", "candidateId", "deletedAt");
+CREATE INDEX IF NOT EXISTS "OnboardingTask_companyId_candidateId_status_deletedAt_idx" ON "OnboardingTask"("companyId", "candidateId", "status", "deletedAt");
+CREATE INDEX IF NOT EXISTS "OnboardingTask_companyId_employeeId_status_deletedAt_idx" ON "OnboardingTask"("companyId", "employeeId", "status", "deletedAt");
+DO $$ BEGIN ALTER TABLE "JobVacancy" ADD CONSTRAINT "JobVacancy_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "Candidate" ADD CONSTRAINT "Candidate_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "Candidate" ADD CONSTRAINT "Candidate_vacancyId_fkey" FOREIGN KEY ("vacancyId") REFERENCES "JobVacancy"("id") ON DELETE SET NULL ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "Candidate" ADD CONSTRAINT "Candidate_employeeId_fkey" FOREIGN KEY ("employeeId") REFERENCES "Employee"("id") ON DELETE SET NULL ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "CandidateDocument" ADD CONSTRAINT "CandidateDocument_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "CandidateDocument" ADD CONSTRAINT "CandidateDocument_candidateId_fkey" FOREIGN KEY ("candidateId") REFERENCES "Candidate"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "OnboardingTask" ADD CONSTRAINT "OnboardingTask_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "OnboardingTask" ADD CONSTRAINT "OnboardingTask_candidateId_fkey" FOREIGN KEY ("candidateId") REFERENCES "Candidate"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "OnboardingTask" ADD CONSTRAINT "OnboardingTask_employeeId_fkey" FOREIGN KEY ("employeeId") REFERENCES "Employee"("id") ON DELETE SET NULL ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS "TrainingProgram" (
+  "id" TEXT NOT NULL, "companyId" TEXT NOT NULL, "code" TEXT NOT NULL,
+  "name" TEXT NOT NULL, "category" TEXT, "provider" TEXT, "location" TEXT,
+  "startDate" TIMESTAMP(3) NOT NULL, "endDate" TIMESTAMP(3) NOT NULL,
+  "capacity" INTEGER, "cost" DECIMAL(18,2), "status" TEXT NOT NULL DEFAULT 'DRAFT',
+  "description" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL, "deletedAt" TIMESTAMP(3),
+  CONSTRAINT "TrainingProgram_pkey" PRIMARY KEY ("id")
+);
+CREATE TABLE IF NOT EXISTS "TrainingParticipant" (
+  "id" TEXT NOT NULL, "companyId" TEXT NOT NULL,
+  "trainingProgramId" TEXT NOT NULL, "employeeId" TEXT NOT NULL,
+  "attendanceStatus" TEXT NOT NULL DEFAULT 'REGISTERED',
+  "completionStatus" TEXT NOT NULL DEFAULT 'PENDING', "score" INTEGER,
+  "certificateNumber" TEXT, "certificateUrl" TEXT, "notes" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL, "deletedAt" TIMESTAMP(3),
+  CONSTRAINT "TrainingParticipant_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "TrainingProgram_companyId_code_key" ON "TrainingProgram"("companyId", "code");
+CREATE INDEX IF NOT EXISTS "TrainingProgram_companyId_status_startDate_deletedAt_idx" ON "TrainingProgram"("companyId", "status", "startDate", "deletedAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "TrainingParticipant_trainingProgramId_employeeId_key" ON "TrainingParticipant"("trainingProgramId", "employeeId");
+CREATE INDEX IF NOT EXISTS "TrainingParticipant_companyId_employeeId_completionStatus_deletedAt_idx" ON "TrainingParticipant"("companyId", "employeeId", "completionStatus", "deletedAt");
+DO $$ BEGIN ALTER TABLE "TrainingProgram" ADD CONSTRAINT "TrainingProgram_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "TrainingParticipant" ADD CONSTRAINT "TrainingParticipant_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "TrainingParticipant" ADD CONSTRAINT "TrainingParticipant_trainingProgramId_fkey" FOREIGN KEY ("trainingProgramId") REFERENCES "TrainingProgram"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "TrainingParticipant" ADD CONSTRAINT "TrainingParticipant_employeeId_fkey" FOREIGN KEY ("employeeId") REFERENCES "Employee"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS "DisciplinaryCase" (
+  "id" TEXT NOT NULL, "companyId" TEXT NOT NULL, "employeeId" TEXT NOT NULL,
+  "caseNumber" TEXT NOT NULL, "incidentDate" TIMESTAMP(3) NOT NULL,
+  "category" TEXT NOT NULL, "severity" TEXT NOT NULL DEFAULT 'WARNING',
+  "title" TEXT NOT NULL, "description" TEXT NOT NULL, "actionTaken" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'OPEN', "validUntil" TIMESTAMP(3),
+  "resolvedAt" TIMESTAMP(3), "resolution" TEXT, "createdById" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL, "deletedAt" TIMESTAMP(3),
+  CONSTRAINT "DisciplinaryCase_pkey" PRIMARY KEY ("id")
+);
+CREATE TABLE IF NOT EXISTS "DisciplinaryDocument" (
+  "id" TEXT NOT NULL, "companyId" TEXT NOT NULL, "disciplinaryCaseId" TEXT NOT NULL,
+  "title" TEXT NOT NULL, "fileName" TEXT NOT NULL, "mimeType" TEXT NOT NULL,
+  "fileSize" INTEGER NOT NULL, "fileData" BYTEA NOT NULL, "uploadedById" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "deletedAt" TIMESTAMP(3),
+  CONSTRAINT "DisciplinaryDocument_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "DisciplinaryCase_companyId_caseNumber_key" ON "DisciplinaryCase"("companyId", "caseNumber");
+CREATE INDEX IF NOT EXISTS "DisciplinaryCase_companyId_employeeId_status_incidentDate_deletedAt_idx" ON "DisciplinaryCase"("companyId", "employeeId", "status", "incidentDate", "deletedAt");
+CREATE INDEX IF NOT EXISTS "DisciplinaryDocument_companyId_disciplinaryCaseId_deletedAt_idx" ON "DisciplinaryDocument"("companyId", "disciplinaryCaseId", "deletedAt");
+DO $$ BEGIN ALTER TABLE "DisciplinaryCase" ADD CONSTRAINT "DisciplinaryCase_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "DisciplinaryCase" ADD CONSTRAINT "DisciplinaryCase_employeeId_fkey" FOREIGN KEY ("employeeId") REFERENCES "Employee"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "DisciplinaryDocument" ADD CONSTRAINT "DisciplinaryDocument_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN ALTER TABLE "DisciplinaryDocument" ADD CONSTRAINT "DisciplinaryDocument_disciplinaryCaseId_fkey" FOREIGN KEY ("disciplinaryCaseId") REFERENCES "DisciplinaryCase"("id") ON DELETE RESTRICT ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+UPDATE "Role"
+SET "permissions" = COALESCE("permissions", '{}'::jsonb)
+  || '{"recruitment":["view","create","edit","delete","approve","export"],"training":["view","create","edit","delete","approve","export"],"discipline":["view","create","edit","delete","approve","export"]}'::jsonb
+WHERE "isSystem" = TRUE AND LOWER("name") = 'owner';
